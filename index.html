@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PRODE Mundial 2026</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; font-size: 11px; background: #f0f4f8; color: #222; }
+h1 { background: #1a3a6a; color: #f5c518; padding: 12px 20px; font-size: 18px; letter-spacing: 2px; }
+h2 { background: #0d2045; color: #fff; padding: 6px 20px; font-size: 12px; letter-spacing: 1px; margin-top: 18px; }
+.container { padding: 10px 16px 40px; }
+.info { background: #fff3cd; border-left: 4px solid #f5c518; padding: 8px 14px; margin: 10px 0 16px; font-size: 12px; }
+.info-elim { background: #ffe0b2; border-left: 4px solid #e67e00; padding: 6px 14px; margin: 6px 0 10px; font-size: 11px; }
+table { border-collapse: collapse; width: 100%; margin-bottom: 6px; background: #fff; }
+th { background: #1a3a6a; color: #f5c518; padding: 5px 7px; text-align: center; font-size: 10px; white-space: nowrap; border: 1px solid #999; }
+td { border: 1px solid #ccc; padding: 3px 6px; white-space: nowrap; }
+.cod { background: #f5c518; font-weight: bold; text-align: center; width: 45px; }
+.td-fecha { color: #555; font-size: 10px; width: 110px; }
+.td-sede { color: #777; font-size: 10px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+.td-equipo { font-weight: 600; min-width: 110px; }
+.L { background: #d4edda; text-align: center; font-weight: bold; color: #155724; }
+.E { background: #fff3cd; text-align: center; font-weight: bold; color: #856404; }
+.V { background: #f8d7da; text-align: center; font-weight: bold; color: #721c24; }
+.res-input { width: 62px; border: 1px solid #aaa; border-radius: 4px; padding: 2px 4px; text-align: center; font-size: 12px; font-family: monospace; background: #f9f9f9; }
+.res-input.ok { background: #d4edda; border-color: #28a745; font-weight: bold; }
+.res-input.err { background: #f8d7da; border-color: #dc3545; }
+.eq-input { width: 130px; border: 1px solid #aaa; border-radius: 4px; padding: 2px 5px; font-size: 11px; background: #fffbe6; font-family: Arial, sans-serif; }
+.eq-input:focus { border-color: #f5c518; outline: none; background: #fff; }
+.pt1 { background: #28a745; color: #fff; text-align: center; font-weight: bold; border-radius: 3px; }
+.pt0 { background: #dc3545; color: #fff; text-align: center; font-weight: bold; border-radius: 3px; }
+.pt-vacio { color: #bbb; text-align: center; }
+.nota-elim { font-size: 9px; color: #888; margin-top: 2px; }
+#tabla-pos table { max-width: 600px; }
+#tabla-pos th { font-size: 11px; padding: 6px 10px; }
+#tabla-pos td { padding: 5px 10px; font-size: 12px; }
+.pos-1 { background: #fff8dc; font-weight: bold; }
+.pos-2 { background: #f5f5f5; }
+.pos-3 { background: #fdf0e0; }
+.pts-badge { background: #1a3a6a; color: #f5c518; padding: 2px 10px; border-radius: 12px; font-weight: bold; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h1>&#x26BD; PRODE MUNDIAL 2026 &mdash; USA &middot; CANADA &middot; MEXICO</h1>
+
+<div class="container">
+<div class="info">
+  &#x1F4A1; <b>Resultados fase de grupos:</b> escribi el marcador en formato <b>2-1</b> y presiona Enter o clic en otro lado. La tabla se actualiza sola.<br>
+  &#x26A0;&#xFE0F; <b>Eliminatorias:</b> los equipos son editables. El resultado es el de 90 minutos + suplementario <b>sin penales</b> (puede quedar empate).
+</div>
+
+<div id="fixture-container"></div>
+
+<h2>&#x1F3C6; TABLA DE POSICIONES</h2>
+<div id="tabla-pos"></div>
+</div>
+
+<script>
+var JUGADORES = ["Angel","Augusto","Constanza","Gabriela","Guillermina","Ivan","Lila","Liliana","Lucia","Magali","Mariano","Pablo","Ricardo","Silvio"];
+
+var PARTIDOS = [
+  {cod:"A1",  grupo:"A", fecha:"jue 11/06 16:00", sede:"Estadio Azteca, Cd. Mexico",   local:"Mexico",          vis:"Sudafrica",        prons:["L","L","L","L","L","L","L","E","L","L","E","L","L","L"]},
+  {cod:"A2",  grupo:"A", fecha:"jue 11/06 23:00", sede:"Estadio Guadalajara",           local:"Corea del Sur",   vis:"Rep. Checa",       prons:["E","L","L","E","L","E","V","L","V","L","E","E","E","V"]},
+  {cod:"A3",  grupo:"A", fecha:"jue 18/06 13:00", sede:"Atlanta Stadium",               local:"Rep. Checa",      vis:"Sudafrica",        prons:["L","E","E","E","V","E","V","E","V","L","E","L","L","E"]},
+  {cod:"A4",  grupo:"A", fecha:"jue 18/06 22:00", sede:"Estadio Guadalajara",           local:"Mexico",          vis:"Corea del Sur",    prons:["E","L","L","V","V","E","L","E","L","L","E","E","L","E"]},
+  {cod:"A5",  grupo:"A", fecha:"mie 24/06 22:00", sede:"Estadio Cd. Mexico",            local:"Rep. Checa",      vis:"Mexico",           prons:["E","E","V","L","L","E","V","V","V","V","V","E","L","E"]},
+  {cod:"A6",  grupo:"A", fecha:"mie 24/06 22:00", sede:"Estadio Monterrey",             local:"Sudafrica",       vis:"Corea del Sur",    prons:["E","V","V","E","L","V","L","V","V","V","V","E","E","E"]},
+  {cod:"B1",  grupo:"B", fecha:"vie 12/06 16:00", sede:"Toronto Stadium",               local:"Canada",          vis:"Bosnia",           prons:["L","L","E","V","L","L","E","L","L","E","L","L","V","L"]},
+  {cod:"B2",  grupo:"B", fecha:"sab 13/06 16:00", sede:"San Francisco Bay Area",        local:"Qatar",           vis:"Suiza",            prons:["V","V","V","V","E","V","V","V","V","V","V","V","E","V"]},
+  {cod:"B3",  grupo:"B", fecha:"jue 18/06 16:00", sede:"Los Angeles Stadium",           local:"Suiza",           vis:"Bosnia",           prons:["L","L","L","E","L","L","E","L","L","L","L","L","V","L"]},
+  {cod:"B4",  grupo:"B", fecha:"jue 18/06 19:00", sede:"BC Place Vancouver",            local:"Canada",          vis:"Qatar",            prons:["L","E","L","V","L","L","E","E","L","L","L","L","L","L"]},
+  {cod:"B5",  grupo:"B", fecha:"mie 24/06 16:00", sede:"BC Place Vancouver",            local:"Suiza",           vis:"Canada",           prons:["L","L","L","L","L","L","E","L","E","E","E","L","E","E"]},
+  {cod:"B6",  grupo:"B", fecha:"mie 24/06 16:00", sede:"Seattle Stadium",               local:"Bosnia",          vis:"Qatar",            prons:["L","E","L","L","E","L","V","E","V","L","E","L","E","L"]},
+  {cod:"C1",  grupo:"C", fecha:"sab 13/06 19:00", sede:"NY New Jersey Stadium",         local:"Brasil",          vis:"Marruecos",        prons:["E","L","L","L","E","E","E","L","E","L","E","E","L","E"]},
+  {cod:"C2",  grupo:"C", fecha:"sab 13/06 22:00", sede:"Boston Stadium",                local:"Haiti",           vis:"Escocia",          prons:["V","E","V","V","V","V","V","V","V","V","V","V","V","V"]},
+  {cod:"C3",  grupo:"C", fecha:"vie 19/06 19:00", sede:"Boston Stadium",                local:"Escocia",         vis:"Marruecos",        prons:["V","V","V","E","V","V","V","L","V","V","V","V","V","V"]},
+  {cod:"C4",  grupo:"C", fecha:"vie 19/06 22:00", sede:"Philadelphia Stadium",          local:"Brasil",          vis:"Haiti",            prons:["L","L","L","L","L","L","E","L","L","L","L","L","L","L"]},
+  {cod:"C5",  grupo:"C", fecha:"mie 24/06 19:00", sede:"Miami Stadium",                 local:"Escocia",         vis:"Brasil",           prons:["V","V","V","E","V","V","V","V","V","V","V","V","V","V"]},
+  {cod:"C6",  grupo:"C", fecha:"mie 24/06 19:00", sede:"Atlanta Stadium",               local:"Marruecos",       vis:"Haiti",            prons:["L","E","L","L","L","L","L","L","L","L","L","L","L","L"]},
+  {cod:"D1",  grupo:"D", fecha:"vie 12/06 22:00", sede:"Los Angeles Stadium",           local:"Estados Unidos",  vis:"Paraguay",         prons:["L","E","V","E","V","V","E","E","L","L","E","L","V","L"]},
+  {cod:"D2",  grupo:"D", fecha:"dom 14/06 01:00", sede:"BC Place Vancouver",            local:"Australia",       vis:"Turquia",          prons:["E","V","V","V","V","E","L","E","L","V","V","E","V","V"]},
+  {cod:"D3",  grupo:"D", fecha:"vie 19/06 16:00", sede:"Seattle Stadium",               local:"Estados Unidos",  vis:"Australia",        prons:["L","L","L","L","E","E","V","L","L","L","L","L","L","E"]},
+  {cod:"D4",  grupo:"D", fecha:"sab 20/06 01:00", sede:"San Francisco Bay Area",        local:"Turquia",         vis:"Paraguay",         prons:["L","E","V","V","E","V","E","V","V","V","E","L","E","L"]},
+  {cod:"D5",  grupo:"D", fecha:"jue 25/06 23:00", sede:"Los Angeles Stadium",           local:"Turquia",         vis:"Estados Unidos",   prons:["E","V","V","L","E","V","L","V","V","E","E","E","E","L"]},
+  {cod:"D6",  grupo:"D", fecha:"jue 25/06 23:00", sede:"San Francisco Bay Area",        local:"Paraguay",        vis:"Australia",        prons:["E","E","L","L","L","L","L","L","V","L","L","E","L","E"]},
+  {cod:"E1",  grupo:"E", fecha:"dom 14/06 14:00", sede:"Houston Stadium",               local:"Alemania",        vis:"Curazao",          prons:["L","L","L","L","L","L","L","L","L","L","L","L","L","L"]},
+  {cod:"E2",  grupo:"E", fecha:"dom 14/06 20:00", sede:"Philadelphia Stadium",          local:"Costa de Marfil", vis:"Ecuador",          prons:["E","L","E","V","E","V","V","V","V","E","L","E","E","E"]},
+  {cod:"E3",  grupo:"E", fecha:"sab 20/06 17:00", sede:"Toronto Stadium",               local:"Alemania",        vis:"Costa de Marfil",  prons:["L","L","L","L","E","L","E","L","L","L","L","L","E","L"]},
+  {cod:"E4",  grupo:"E", fecha:"sab 20/06 21:00", sede:"Kansas City Stadium",           local:"Ecuador",         vis:"Curazao",          prons:["L","L","L","L","L","L","E","L","L","L","L","L","L","L"]},
+  {cod:"E5",  grupo:"E", fecha:"jue 25/06 17:00", sede:"NY New Jersey Stadium",         local:"Ecuador",         vis:"Alemania",         prons:["V","V","V","L","E","E","L","E","V","V","V","V","L","V"]},
+  {cod:"E6",  grupo:"E", fecha:"jue 25/06 17:00", sede:"Philadelphia Stadium",          local:"Curazao",         vis:"Costa de Marfil",  prons:["V","V","E","V","V","V","E","V","V","V","V","V","V","V"]},
+  {cod:"F1",  grupo:"F", fecha:"dom 14/06 17:00", sede:"Dallas Stadium",                local:"Paises Bajos",    vis:"Japon",            prons:["L","E","L","V","L","L","L","L","L","L","E","L","L","L"]},
+  {cod:"F2",  grupo:"F", fecha:"dom 14/06 23:00", sede:"Estadio Monterrey",             local:"Suecia",          vis:"Tunez",            prons:["L","L","L","L","E","L","L","L","L","L","E","L","L","L"]},
+  {cod:"F3",  grupo:"F", fecha:"sab 20/06 14:00", sede:"Houston Stadium",               local:"Paises Bajos",    vis:"Suecia",           prons:["L","L","L","E","E","L","V","L","L","E","L","L","E","E"]},
+  {cod:"F4",  grupo:"F", fecha:"dom 21/06 01:00", sede:"Estadio Monterrey",             local:"Tunez",           vis:"Japon",            prons:["V","V","V","V","L","V","V","E","V","V","V","V","V","V"]},
+  {cod:"F5",  grupo:"F", fecha:"jue 25/06 20:00", sede:"Kansas City Stadium",           local:"Tunez",           vis:"Paises Bajos",     prons:["V","V","V","V","V","V","L","V","V","V","V","V","V","V"]},
+  {cod:"F6",  grupo:"F", fecha:"jue 25/06 20:00", sede:"Dallas Stadium",                local:"Japon",           vis:"Suecia",           prons:["L","V","L","L","L","L","V","V","L","V","L","L","E","E"]},
+  {cod:"G1",  grupo:"G", fecha:"lun 15/06 16:00", sede:"Seattle Stadium",               local:"Belgica",         vis:"Egipto",           prons:["E","E","L","E","V","L","L","L","L","L","L","E","L","L"]},
+  {cod:"G2",  grupo:"G", fecha:"lun 15/06 22:00", sede:"Los Angeles Stadium",           local:"Iran",            vis:"Nueva Zelanda",    prons:["L","V","L","L","L","V","L","L","V","L","E","L","L","L"]},
+  {cod:"G3",  grupo:"G", fecha:"dom 21/06 16:00", sede:"Los Angeles Stadium",           local:"Belgica",         vis:"Iran",             prons:["L","L","L","E","L","L","V","L","L","L","L","L","V","L"]},
+  {cod:"G4",  grupo:"G", fecha:"dom 21/06 22:00", sede:"BC Place Vancouver",            local:"Nueva Zelanda",   vis:"Egipto",           prons:["V","V","V","V","V","E","L","E","V","V","L","V","V","V"]},
+  {cod:"G5",  grupo:"G", fecha:"sab 27/06 00:00", sede:"BC Place Vancouver",            local:"Nueva Zelanda",   vis:"Belgica",          prons:["V","V","V","E","V","E","E","V","V","V","V","V","V","V"]},
+  {cod:"G6",  grupo:"G", fecha:"sab 27/06 00:00", sede:"Seattle Stadium",               local:"Egipto",          vis:"Iran",             prons:["E","L","V","L","E","L","V","E","L","L","E","E","E","E"]},
+  {cod:"H1",  grupo:"H", fecha:"lun 15/06 13:00", sede:"Atlanta Stadium",               local:"Espana",          vis:"Cabo Verde",       prons:["L","L","L","L","L","L","L","L","L","L","L","L","L","L"]},
+  {cod:"H2",  grupo:"H", fecha:"lun 15/06 19:00", sede:"Miami Stadium",                 local:"Arabia Saudita",  vis:"Uruguay",          prons:["V","V","V","V","E","V","V","V","V","E","E","V","E","V"]},
+  {cod:"H3",  grupo:"H", fecha:"dom 21/06 13:00", sede:"Atlanta Stadium",               local:"Espana",          vis:"Arabia Saudita",   prons:["L","L","L","L","L","L","E","L","L","L","L","L","L","L"]},
+  {cod:"H4",  grupo:"H", fecha:"dom 21/06 19:00", sede:"Miami Stadium",                 local:"Uruguay",         vis:"Cabo Verde",       prons:["L","L","L","L","E","L","L","L","L","L","L","E","L","L"]},
+  {cod:"H5",  grupo:"H", fecha:"vie 26/06 21:00", sede:"Estadio Guadalajara",           local:"Uruguay",         vis:"Espana",           prons:["V","E","E","V","V","V","E","L","V","E","E","V","V","V"]},
+  {cod:"H6",  grupo:"H", fecha:"vie 26/06 21:00", sede:"Houston Stadium",               local:"Cabo Verde",      vis:"Arabia Saudita",   prons:["V","V","V","E","E","V","L","V","V","V","V","L","E","V"]},
+  {cod:"I1",  grupo:"I", fecha:"mar 16/06 16:00", sede:"NY New Jersey Stadium",         local:"Francia",         vis:"Senegal",          prons:["L","L","L","L","E","L","V","E","L","L","L","L","L","L"]},
+  {cod:"I2",  grupo:"I", fecha:"mar 16/06 19:00", sede:"Boston Stadium",                local:"Irak",            vis:"Noruega",          prons:["V","V","E","V","V","V","E","V","E","V","V","V","V","V"]},
+  {cod:"I3",  grupo:"I", fecha:"lun 22/06 18:00", sede:"Philadelphia Stadium",          local:"Francia",         vis:"Irak",             prons:["L","L","L","L","L","L","E","L","L","L","L","L","L","L"]},
+  {cod:"I4",  grupo:"I", fecha:"lun 22/06 21:00", sede:"NY New Jersey Stadium",         local:"Noruega",         vis:"Senegal",          prons:["E","L","E","E","V","V","V","V","L","E","V","V","E","L"]},
+  {cod:"I5",  grupo:"I", fecha:"vie 26/06 16:00", sede:"Boston Stadium",                local:"Noruega",         vis:"Francia",          prons:["V","V","V","E","E","V","E","V","V","V","V","V","E","V"]},
+  {cod:"I6",  grupo:"I", fecha:"vie 26/06 16:00", sede:"Toronto Stadium",               local:"Senegal",         vis:"Irak",             prons:["L","V","L","L","L","L","L","L","L","L","L","L","L","L"]},
+  {cod:"J1",  grupo:"J", fecha:"mar 16/06 22:00", sede:"Kansas City Stadium",           local:"Argentina",       vis:"Argelia",          prons:["L","L","L","L","E","L","L","L","L","L","L","L","L","L"]},
+  {cod:"J2",  grupo:"J", fecha:"mie 17/06 01:00", sede:"San Francisco Bay Area",        local:"Austria",         vis:"Jordania",         prons:["L","L","L","L","L","L","E","L","L","L","E","L","L","L"]},
+  {cod:"J3",  grupo:"J", fecha:"lun 22/06 14:00", sede:"Dallas Stadium",                local:"Argentina",       vis:"Austria",          prons:["L","E","L","L","E","L","L","L","L","L","L","L","L","L"]},
+  {cod:"J4",  grupo:"J", fecha:"mar 23/06 00:00", sede:"San Francisco Bay Area",        local:"Jordania",        vis:"Argelia",          prons:["V","V","V","V","V","V","E","V","V","V","E","V","V","V"]},
+  {cod:"J5",  grupo:"J", fecha:"sab 27/06 23:00", sede:"Dallas Stadium",                local:"Jordania",        vis:"Argentina",        prons:["V","V","V","V","V","V","V","V","V","V","V","V","V","V"]},
+  {cod:"J6",  grupo:"J", fecha:"sab 27/06 23:00", sede:"Kansas City Stadium",           local:"Argelia",         vis:"Austria",          prons:["V","V","V","V","E","E","E","V","V","V","E","V","V","E"]},
+  {cod:"K1",  grupo:"K", fecha:"mie 17/06 13:00", sede:"Houston Stadium",               local:"Portugal",        vis:"Rep. D. Congo",    prons:["L","L","L","L","L","L","L","L","L","L","E","L","L","L"]},
+  {cod:"K2",  grupo:"K", fecha:"mie 17/06 23:00", sede:"Estadio Cd. Mexico",            local:"Uzbekistan",      vis:"Colombia",         prons:["V","V","V","V","V","L","V","V","V","V","E","V","V","V"]},
+  {cod:"K3",  grupo:"K", fecha:"mar 23/06 14:00", sede:"Houston Stadium",               local:"Portugal",        vis:"Uzbekistan",       prons:["L","L","L","E","L","L","L","L","L","L","L","L","L","L"]},
+  {cod:"K4",  grupo:"K", fecha:"mar 23/06 23:00", sede:"Estadio Guadalajara",           local:"Colombia",        vis:"Rep. D. Congo",    prons:["L","L","L","E","L","L","L","L","L","L","L","L","L","L"]},
+  {cod:"K5",  grupo:"K", fecha:"sab 27/06 20:30", sede:"Miami Stadium",                 local:"Colombia",        vis:"Portugal",         prons:["E","E","V","E","V","V","L","V","E","E","E","E","E","V"]},
+  {cod:"K6",  grupo:"K", fecha:"sab 27/06 20:30", sede:"Atlanta Stadium",               local:"Rep. D. Congo",   vis:"Uzbekistan",       prons:["L","V","L","V","E","V","L","L","L","L","L","L","E","E"]},
+  {cod:"L1",  grupo:"L", fecha:"mie 17/06 17:00", sede:"Dallas Stadium",                local:"Inglaterra",      vis:"Croacia",          prons:["L","V","E","V","L","L","V","E","E","L","E","L","E","V"]},
+  {cod:"L2",  grupo:"L", fecha:"mie 17/06 20:00", sede:"Toronto Stadium",               local:"Ghana",           vis:"Panama",           prons:["L","L","E","L","L","L","E","L","L","V","L","L","L","L"]},
+  {cod:"L3",  grupo:"L", fecha:"mar 23/06 17:00", sede:"Boston Stadium",                local:"Inglaterra",      vis:"Ghana",            prons:["L","E","L","L","L","L","V","L","L","E","E","L","L","L"]},
+  {cod:"L4",  grupo:"L", fecha:"mar 23/06 20:00", sede:"Toronto Stadium",               local:"Panama",          vis:"Croacia",          prons:["V","V","V","V","V","V","V","V","V","V","V","V","V","V"]},
+  {cod:"L5",  grupo:"L", fecha:"sab 27/06 18:00", sede:"NY New Jersey Stadium",         local:"Panama",          vis:"Inglaterra",       prons:["V","V","V","V","V","V","L","V","V","V","V","V","V","V"]},
+  {cod:"L6",  grupo:"L", fecha:"sab 27/06 18:00", sede:"Philadelphia Stadium",          local:"Croacia",         vis:"Ghana",            prons:["E","L","L","L","L","L","L","E","L","L","E","E","L","L"]},
+  // ELIMINATORIAS
+  {cod:"P73",  fase:"32avos",  fecha:"dom 28/06 16:00", sede:"Los Angeles Stadium",        local:"2 Grupo A",    vis:"2 Grupo B"},
+  {cod:"P74",  fase:"32avos",  fecha:"lun 29/06 17:30", sede:"Boston Stadium",             local:"1 Grupo E",    vis:"3 A/B/C/D/E/F"},
+  {cod:"P75",  fase:"32avos",  fecha:"lun 29/06 22:00", sede:"Estadio Monterrey",          local:"1 Grupo F",    vis:"2 Grupo C"},
+  {cod:"P76",  fase:"32avos",  fecha:"lun 29/06 14:00", sede:"Houston Stadium",            local:"1 Grupo C",    vis:"2 Grupo F"},
+  {cod:"P77",  fase:"32avos",  fecha:"mar 30/06 18:00", sede:"NY New Jersey Stadium",      local:"1 Grupo I",    vis:"3 C/D/F/G/H"},
+  {cod:"P78",  fase:"32avos",  fecha:"mar 30/06 14:00", sede:"Dallas Stadium",             local:"2 Grupo E",    vis:"2 Grupo I"},
+  {cod:"P79",  fase:"32avos",  fecha:"mar 30/06 22:00", sede:"Estadio Azteca, Cd. Mexico", local:"1 Grupo A",    vis:"3 C/E/F/H/I"},
+  {cod:"P80",  fase:"32avos",  fecha:"mie 01/07 13:00", sede:"Atlanta Stadium",            local:"1 Grupo L",    vis:"3 E/H/I/J/K"},
+  {cod:"P81",  fase:"32avos",  fecha:"mie 01/07 21:00", sede:"San Francisco Bay Area",     local:"1 Grupo D",    vis:"3 B/E/F/I/J"},
+  {cod:"P82",  fase:"32avos",  fecha:"mie 01/07 17:00", sede:"Seattle Stadium",            local:"1 Grupo G",    vis:"3 A/E/H/I/J"},
+  {cod:"P83",  fase:"32avos",  fecha:"jue 02/07 20:00", sede:"Toronto Stadium",            local:"2 Grupo K",    vis:"2 Grupo L"},
+  {cod:"P84",  fase:"32avos",  fecha:"jue 02/07 16:00", sede:"Los Angeles Stadium",        local:"1 Grupo H",    vis:"2 Grupo J"},
+  {cod:"P85",  fase:"32avos",  fecha:"vie 03/07 00:00", sede:"BC Place Vancouver",         local:"1 Grupo B",    vis:"3 E/F/G/I/J"},
+  {cod:"P86",  fase:"32avos",  fecha:"vie 03/07 19:00", sede:"Miami Stadium",              local:"1 Grupo J",    vis:"2 Grupo H"},
+  {cod:"P87",  fase:"32avos",  fecha:"vie 03/07 22:30", sede:"Kansas City Stadium",        local:"1 Grupo K",    vis:"3 D/E/I/J/L"},
+  {cod:"P88",  fase:"32avos",  fecha:"vie 03/07 15:00", sede:"Dallas Stadium",             local:"2 Grupo D",    vis:"2 Grupo G"},
+  {cod:"P89",  fase:"octavos", fecha:"sab 04/07 18:00", sede:"Philadelphia Stadium",       local:"Gan. P74",     vis:"Gan. P77"},
+  {cod:"P90",  fase:"octavos", fecha:"sab 04/07 14:00", sede:"Houston Stadium",            local:"Gan. P73",     vis:"Gan. P75"},
+  {cod:"P91",  fase:"octavos", fecha:"dom 05/07 17:00", sede:"NY New Jersey Stadium",      local:"Gan. P76",     vis:"Gan. P78"},
+  {cod:"P92",  fase:"octavos", fecha:"dom 05/07 21:00", sede:"Estadio Azteca, Cd. Mexico", local:"Gan. P79",     vis:"Gan. P80"},
+  {cod:"P93",  fase:"octavos", fecha:"lun 06/07 16:00", sede:"Dallas Stadium",             local:"Gan. P83",     vis:"Gan. P84"},
+  {cod:"P94",  fase:"octavos", fecha:"lun 06/07 21:00", sede:"Seattle Stadium",            local:"Gan. P81",     vis:"Gan. P82"},
+  {cod:"P95",  fase:"octavos", fecha:"mar 07/07 13:00", sede:"Atlanta Stadium",            local:"Gan. P86",     vis:"Gan. P88"},
+  {cod:"P96",  fase:"octavos", fecha:"mar 07/07 17:00", sede:"BC Place Vancouver",         local:"Gan. P85",     vis:"Gan. P87"},
+  {cod:"P97",  fase:"cuartos", fecha:"jue 09/07 17:00", sede:"Boston Stadium",             local:"Gan. P89",     vis:"Gan. P90"},
+  {cod:"P98",  fase:"cuartos", fecha:"vie 10/07 16:00", sede:"Los Angeles Stadium",        local:"Gan. P93",     vis:"Gan. P94"},
+  {cod:"P99",  fase:"cuartos", fecha:"sab 11/07 18:00", sede:"Miami Stadium",              local:"Gan. P91",     vis:"Gan. P92"},
+  {cod:"P100", fase:"cuartos", fecha:"sab 11/07 22:00", sede:"Kansas City Stadium",        local:"Gan. P95",     vis:"Gan. P96"},
+  {cod:"P101", fase:"semis",   fecha:"mar 14/07 16:00", sede:"Dallas Stadium",             local:"Gan. P97",     vis:"Gan. P98"},
+  {cod:"P102", fase:"semis",   fecha:"mie 15/07 16:00", sede:"Atlanta Stadium",            local:"Gan. P99",     vis:"Gan. P100"},
+  {cod:"P103", fase:"3er",     fecha:"sab 18/07 18:00", sede:"Miami Stadium",              local:"Perd. P101",   vis:"Perd. P102"},
+  {cod:"P104", fase:"final",   fecha:"dom 19/07 16:00", sede:"NY New Jersey Stadium",      local:"Gan. P101",    vis:"Gan. P102"}
+];
+
+// Pronósticos de eliminatorias (editables): {cod: {jugador: "L"/"E"/"V"}}
+var pronsElim = {};
+// Almacena nombres editados en eliminatorias: {cod: {local:"...", vis:"..."}}
+var equiposElim = {};
+
+function parseRes(str) {
+  if (!str || !str.trim()) return null;
+  var m = str.trim().match(/^(\d+)\s*[-]\s*(\d+)$/);
+  if (!m) return null;
+  var gl = parseInt(m[1]), gv = parseInt(m[2]);
+  return {gl:gl, gv:gv, signo: gl>gv?"L": gl<gv?"V":"E"};
+}
+
+function calcPts(signo, pron) {
+  if (!signo || !pron) return null;
+  return signo === pron ? 1 : 0;
+}
+
+function getLocalNombre(p) {
+  return equiposElim[p.cod] ? equiposElim[p.cod].local : p.local;
+}
+function getVisNombre(p) {
+  return equiposElim[p.cod] ? equiposElim[p.cod].vis : p.vis;
+}
+
+function getTabla() {
+  return JUGADORES.map(function(j, ji) {
+    var pts=0, ac=0, jug=0;
+    PARTIDOS.forEach(function(p) {
+      if (!p.prons) return;
+      var r = parseRes(resultados[p.cod]);
+      if (!r) return;
+      jug++;
+      var pu = calcPts(r.signo, p.prons[ji]);
+      pts += pu; if (pu===1) ac++;
+    });
+    return {jugador:j, pts:pts, aciertos:ac, jugados:jug};
+  }).sort(function(a,b){ return b.pts-a.pts || b.aciertos-a.aciertos; });
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function thJugadores() {
+  var h = "";
+  JUGADORES.forEach(function(j){ h += "<th>"+j+"</th>"; });
+  return h;
+}
+
+function renderFila(p, conProns) {
+  var r      = parseRes(resultados[p.cod]);
+  var resVal = resultados[p.cod] || "";
+  var esElim = !!p.fase;
+  var inpCls = "res-input" + (r ? " ok" : "");
+
+  var localNom = getLocalNombre(p);
+  var visNom   = getVisNombre(p);
+
+  var localCell, visCell;
+  if (esElim) {
+    localCell = "<td class='td-equipo'><input class='eq-input' data-cod='"+p.cod+"' data-eq='local' type='text' value='"+localNom+"' placeholder='Local'/></td>";
+    visCell   = "<td class='td-equipo'><input class='eq-input' data-cod='"+p.cod+"' data-eq='vis'   type='text' value='"+visNom+"'   placeholder='Visitante'/></td>";
+  } else {
+    localCell = "<td class='td-equipo'>"+localNom+"</td>";
+    visCell   = "<td class='td-equipo'>"+visNom+"</td>";
+  }
+
+  var resCell = "<td style='text-align:center'>"
+    + "<input class='"+inpCls+"' data-cod='"+p.cod+"' type='text' value='"+resVal+"' placeholder='0-0'/>"
+    + (esElim ? "<div class='nota-elim'>90'+supl. sin penales</div>" : "")
+    + "</td>";
+
+  var h = "<tr>";
+  h += "<td class='td-fecha'>"+p.fecha+"</td>";
+  h += "<td class='td-sede'>"+p.sede+"</td>";
+  h += "<td class='cod'>"+p.cod+"</td>";
+  h += localCell + resCell + visCell;
+
+  if (conProns && p.prons) {
+    JUGADORES.forEach(function(j, ji) {
+      var pron   = p.prons[ji];
+      var pts    = r ? calcPts(r.signo, pron) : null;
+      var ptsCls = pts===1 ? " pt1" : pts===0 ? " pt0" : " pt-vacio";
+      var ptsTxt = pts!==null ? " <b>("+pts+"pt)</b>" : "";
+      h += "<td class='"+pron+ptsCls+"'>"+pron+ptsTxt+"</td>";
+    });
+  }
+  h += "</tr>";
+  return h;
+}
+
+function renderFixture() {
+  var grupos = ["A","B","C","D","E","F","G","H","I","J","K","L"];
+  var fases  = [
+    {key:"32avos",  label:"Dieciseisavos de Final"},
+    {key:"octavos", label:"Octavos de Final"},
+    {key:"cuartos", label:"Cuartos de Final"},
+    {key:"semis",   label:"Semifinales"},
+    {key:"3er",     label:"Tercer Puesto"},
+    {key:"final",   label:"Final"}
+  ];
+
+  var html = "";
+
+  grupos.forEach(function(g) {
+    var ps = PARTIDOS.filter(function(p){ return p.grupo===g; });
+    html += "<h2>GRUPO "+g+"</h2><table><thead><tr>";
+    html += "<th>Fecha</th><th>Sede</th><th>Cod</th><th>Local</th><th>Result.</th><th>Visitante</th>";
+    html += thJugadores();
+    html += "</tr></thead><tbody>";
+    ps.forEach(function(p){ html += renderFila(p, true); });
+    html += "</tbody></table>";
+  });
+
+  fases.forEach(function(f) {
+    var ps = PARTIDOS.filter(function(p){ return p.fase===f.key; });
+    if (!ps.length) return;
+    html += "<h2>"+f.label+" &mdash; resultado 90'+supl. sin penales (empate valido)</h2>";
+    html += "<table><thead><tr>";
+    html += "<th>Fecha</th><th>Sede</th><th>Cod</th><th>Local (editable)</th><th>Result.</th><th>Visitante (editable)</th>";
+    html += "</tr></thead><tbody>";
+    ps.forEach(function(p){ html += renderFila(p, false); });
+    html += "</tbody></table>";
+  });
+
+  document.getElementById("fixture-container").innerHTML = html;
+  bindEvents();
+}
+
+function bindEvents() {
+  // Inputs de resultado
+  document.querySelectorAll("input.res-input").forEach(function(inp) {
+    inp.addEventListener("change", function() {
+      var cod = this.getAttribute("data-cod");
+      var val = this.value.trim();
+      var r   = parseRes(val);
+      if (val === "") {
+        delete resultados[cod];
+        this.classList.remove("ok","err");
+      } else if (r) {
+        resultados[cod] = val;
+        this.classList.add("ok"); this.classList.remove("err");
+      } else {
+        this.classList.add("err"); this.classList.remove("ok");
+        return;
+      }
+      actualizarCeldas();
+      renderTabla();
+    });
+  });
+
+  // Inputs de equipos en eliminatorias
+  document.querySelectorAll("input.eq-input").forEach(function(inp) {
+    inp.addEventListener("change", function() {
+      var cod = this.getAttribute("data-cod");
+      var eq  = this.getAttribute("data-eq");
+      if (!equiposElim[cod]) equiposElim[cod] = {};
+      equiposElim[cod][eq] = this.value;
+    });
+  });
+}
+
+function actualizarCeldas() {
+  PARTIDOS.forEach(function(p) {
+    if (!p.prons) return;
+    var r = parseRes(resultados[p.cod]);
+    var inputs = document.querySelectorAll("input.res-input[data-cod='"+p.cod+"']");
+    if (!inputs.length) return;
+    var fila = inputs[0].closest("tr");
+    if (!fila) return;
+    var celdas = fila.querySelectorAll("td");
+    JUGADORES.forEach(function(j, ji) {
+      var pron   = p.prons[ji];
+      var pts    = r ? calcPts(r.signo, pron) : null;
+      var ptsCls = pts===1 ? " pt1" : pts===0 ? " pt0" : " pt-vacio";
+      var celda  = celdas[6 + ji];
+      if (!celda) return;
+      celda.className    = pron + ptsCls;
+      celda.innerHTML    = pron + (pts!==null ? " <b>("+pts+"pt)</b>" : "");
+    });
+  });
+}
+
+function renderTabla() {
+  var tabla    = getTabla();
+  var medallas = ["1","2","3"];
+  var html     = "<table><thead><tr>";
+  html += "<th>#</th><th>Jugador</th><th>Partidos</th><th>Aciertos</th><th>Puntos</th>";
+  html += "</tr></thead><tbody>";
+  tabla.forEach(function(row, i) {
+    var cls    = i===0?"pos-1": i===1?"pos-2": i===2?"pos-3":"";
+    var medal  = i<3 ? medallas[i] : (i+1);
+    html += "<tr class='"+cls+"'>";
+    html += "<td style='text-align:center;font-weight:bold'>"+medal+"</td>";
+    html += "<td><b>"+row.jugador+"</b></td>";
+    html += "<td style='text-align:center;color:#555'>"+row.jugados+"</td>";
+    html += "<td style='text-align:center;color:#28a745'>"+row.aciertos+"</td>";
+    html += "<td style='text-align:center'><span class='pts-badge'>"+row.pts+"</span></td>";
+    html += "</tr>";
+  });
+  html += "</tbody></table>";
+  html += "<p style='color:#888;font-size:11px;margin-top:8px'>Puntaje calculado sobre partidos con resultado cargado.</p>";
+  document.getElementById("tabla-pos").innerHTML = html;
+}
+
+// INIT
+renderFixture();
+renderTabla();
+</script>
+</body>
+</html>
