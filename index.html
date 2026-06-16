@@ -26,10 +26,11 @@ td { border: 1px solid #ccc; padding: 3px 6px; white-space: nowrap; }
 .res-input.err { background: #f8d7da; border-color: #dc3545; }
 .eq-input { width: 130px; border: 1px solid #aaa; border-radius: 4px; padding: 2px 5px; font-size: 11px; background: #fffbe6; font-family: Arial, sans-serif; }
 .eq-input:focus { border-color: #f5c518; outline: none; background: #fff; }
-.pron-select { width: 56px; border: 1px solid #aaa; border-radius: 4px; padding: 2px; text-align: center; font-size: 11px; font-weight: bold; background: #fff; }
+.pron-select { width: 48px; border: 1px solid #aaa; border-radius: 3px; padding: 1px; text-align: center; font-size: 10px; font-weight: bold; background: #fff; }
 .pron-select.psL { background: #d4edda; border-color: #28a745; color: #155724; }
 .pron-select.psE { background: #fff3cd; border-color: #f5c518; color: #856404; }
 .pron-select.psV { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+.pts-mini { font-size: 8px; display: block; }
 .pt1 { background: #28a745; color: #fff; text-align: center; font-weight: bold; border-radius: 3px; }
 .pt0 { background: #dc3545; color: #fff; text-align: center; font-weight: bold; border-radius: 3px; }
 .pt-vacio { color: #bbb; text-align: center; }
@@ -51,13 +52,7 @@ td { border: 1px solid #ccc; padding: 3px 6px; white-space: nowrap; }
 <div class="container">
 <div class="info">
   Resultados fase de grupos: escribi el marcador en formato 2-1 y presiona Enter o clic en otro lado. La tabla se actualiza sola.<br>
-  Eliminatorias: los equipos son editables. El resultado es el de 90 minutos + suplementario sin penales (puede quedar empate).
-</div>
-
-<div class="jugador-bar">
-  <label>Cargar pronosticos de eliminatorias como:</label>
-  <select id="sel-jugador"></select>
-  <span style="color:#888;font-size:11px">Elegi tu nombre antes de cargar tus pronosticos en Dieciseisavos / Octavos / Cuartos / Semis / Final.</span>
+  Eliminatorias: los equipos son editables. El resultado es el de 90 minutos + suplementario sin penales (puede quedar empate). Cada jugador carga su pronostico L/E/V en su propia columna.
 </div>
 
 <div id="fixture-container">Cargando datos...</div>
@@ -179,7 +174,6 @@ var resultados  = {};
 var equiposElim = {};
 // Pronosticos eliminatorias: { cod: { jugador: "L"/"E"/"V" } }
 var pronsElim   = {};
-var jugadorSel  = JUGADORES[0];
 
 function parseRes(str) {
   if (!str || !str.trim()) return null;
@@ -229,15 +223,15 @@ function thJug() {
   return h;
 }
 
-function selPronHtml(p) {
-  var actual = getPronElim(p.cod, jugadorSel);
+function selPronHtml(cod, jugador) {
+  var actual = getPronElim(cod, jugador);
   var opts = ["", "L", "E", "V"].map(function(v) {
     var label = v === "" ? "-" : v;
     var sel = v === actual ? " selected" : "";
     return "<option value='"+v+"'"+sel+">"+label+"</option>";
   }).join("");
   var cls = "pron-select" + (actual === "L" ? " psL" : actual === "E" ? " psE" : actual === "V" ? " psV" : "");
-  return "<select class='"+cls+"' data-cod='"+p.cod+"' data-elimpron='1'>"+opts+"</select>";
+  return "<select class='"+cls+"' data-cod='"+cod+"' data-jugador='"+jugador+"' data-elimpron='1'>"+opts+"</select>";
 }
 
 function renderFila(p, conProns) {
@@ -272,13 +266,12 @@ function renderFila(p, conProns) {
       h += "<td class='"+pron+pcls+"'>"+pron+ptxt+"</td>";
     });
   } else if (esElim) {
-    // Columna de pronostico editable para el jugador seleccionado
-    var miPron = getPronElim(p.cod, jugadorSel);
-    var pts    = r ? calcPts(r.signo, miPron) : null;
-    var pcls   = pts===1 ? " pt1" : pts===0 ? " pt0" : "";
-    var ptxt   = pts!==null ? " <b>("+pts+"pt)</b>" : "";
-    h += "<td>"+selPronHtml(p)+"</td>";
-    h += "<td class='"+pcls+"' style='text-align:center'>"+(miPron?miPron+ptxt:"-")+"</td>";
+    JUGADORES.forEach(function(j) {
+      var pron = getPronElim(p.cod, j);
+      var pts  = r ? calcPts(r.signo, pron) : null;
+      var ptxt = pts!==null ? "<span class='pts-mini'>("+pts+"pt)</span>" : "";
+      h += "<td style='text-align:center'>"+selPronHtml(p.cod, j)+ptxt+"</td>";
+    });
   }
   return h + "</tr>";
 }
@@ -308,7 +301,7 @@ function renderFixture() {
     var ps = PARTIDOS.filter(function(p){ return p.fase===f.key; });
     if (!ps.length) return;
     html += "<h2>"+f.label+" - resultado 90+supl sin penales (empate valido)</h2>";
-    html += "<table><thead><tr><th>Fecha</th><th>Sede</th><th>Cod</th><th>Local (editable)</th><th>Result.</th><th>Visitante (editable)</th><th>Tu pronostico</th><th>Pts</th></tr></thead><tbody>";
+    html += "<table><thead><tr><th>Fecha</th><th>Sede</th><th>Cod</th><th>Local (editable)</th><th>Result.</th><th>Visitante (editable)</th>"+thJug()+"</tr></thead><tbody>";
     ps.forEach(function(p){ html += renderFila(p, false); });
     html += "</tbody></table>";
   });
@@ -350,8 +343,9 @@ function bindEvents() {
   document.querySelectorAll("select[data-elimpron]").forEach(function(sel) {
     sel.onchange = function() {
       var cod = this.getAttribute("data-cod");
+      var jug = this.getAttribute("data-jugador");
       if (!pronsElim[cod]) pronsElim[cod] = {};
-      pronsElim[cod][jugadorSel] = this.value;
+      pronsElim[cod][jug] = this.value;
       renderFixture();
       renderTabla();
     };
@@ -376,22 +370,7 @@ function renderTabla() {
   document.getElementById("tabla-pos").innerHTML = html;
 }
 
-function initSelectorJugador() {
-  var sel = document.getElementById("sel-jugador");
-  JUGADORES.forEach(function(j) {
-    var o = document.createElement("option");
-    o.value = j; o.text = j;
-    sel.appendChild(o);
-  });
-  sel.value = jugadorSel;
-  sel.onchange = function() {
-    jugadorSel = this.value;
-    renderFixture();
-  };
-}
-
 // INIT
-initSelectorJugador();
 renderFixture();
 renderTabla();
 </script>
