@@ -4,8 +4,6 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>PRODE Mundial 2026</title>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: Arial, sans-serif; font-size: 11px; background: #f0f4f8; color: #222; }
@@ -28,6 +26,10 @@ td { border: 1px solid #ccc; padding: 3px 6px; white-space: nowrap; }
 .res-input.err { background: #f8d7da; border-color: #dc3545; }
 .eq-input { width: 130px; border: 1px solid #aaa; border-radius: 4px; padding: 2px 5px; font-size: 11px; background: #fffbe6; font-family: Arial, sans-serif; }
 .eq-input:focus { border-color: #f5c518; outline: none; background: #fff; }
+.pron-select { width: 56px; border: 1px solid #aaa; border-radius: 4px; padding: 2px; text-align: center; font-size: 11px; font-weight: bold; background: #fff; }
+.pron-select.psL { background: #d4edda; border-color: #28a745; color: #155724; }
+.pron-select.psE { background: #fff3cd; border-color: #f5c518; color: #856404; }
+.pron-select.psV { background: #f8d7da; border-color: #dc3545; color: #721c24; }
 .pt1 { background: #28a745; color: #fff; text-align: center; font-weight: bold; border-radius: 3px; }
 .pt0 { background: #dc3545; color: #fff; text-align: center; font-weight: bold; border-radius: 3px; }
 .pt-vacio { color: #bbb; text-align: center; }
@@ -39,16 +41,25 @@ td { border: 1px solid #ccc; padding: 3px 6px; white-space: nowrap; }
 .pos-2 { background: #f5f5f5; }
 .pos-3 { background: #fdf0e0; }
 .pts-badge { background: #1a3a6a; color: #f5c518; padding: 2px 10px; border-radius: 12px; font-weight: bold; font-size: 13px; }
-#ind-firebase { font-size: 12px; font-weight: normal; margin-left: 20px; letter-spacing: 0; }
+.jugador-bar { background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 8px 12px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.jugador-bar label { font-weight: bold; font-size: 12px; }
+.jugador-bar select { font-size: 13px; padding: 4px 8px; border-radius: 4px; border: 1px solid #aaa; }
 </style>
 </head>
 <body>
-<h1>PRODE MUNDIAL 2026 - USA CANADA MEXICO <span id="ind-firebase">Conectando...</span></h1>
+<h1>PRODE MUNDIAL 2026 - USA CANADA MEXICO</h1>
 <div class="container">
 <div class="info">
-  Resultados fase de grupos: escribi el marcador en formato 2-1 y presiona Enter o clic en otro lado. La tabla se actualiza sola.
+  Resultados fase de grupos: escribi el marcador en formato 2-1 y presiona Enter o clic en otro lado. La tabla se actualiza sola.<br>
   Eliminatorias: los equipos son editables. El resultado es el de 90 minutos + suplementario sin penales (puede quedar empate).
 </div>
+
+<div class="jugador-bar">
+  <label>Cargar pronosticos de eliminatorias como:</label>
+  <select id="sel-jugador"></select>
+  <span style="color:#888;font-size:11px">Elegi tu nombre antes de cargar tus pronosticos en Dieciseisavos / Octavos / Cuartos / Semis / Final.</span>
+</div>
+
 <div id="fixture-container">Cargando datos...</div>
 <h2>TABLA DE POSICIONES</h2>
 <div id="tabla-pos"></div>
@@ -166,24 +177,9 @@ var PARTIDOS = [
 
 var resultados  = {};
 var equiposElim = {};
-var db          = null;
-var guardando   = false;
-
-function updInd() {
-  var el = document.getElementById("ind-firebase");
-  if (!el) return;
-  el.innerHTML = guardando ? " Guardando..." : " Guardado en la nube";
-  el.style.color = guardando ? "#f59e0b" : "#90ee90";
-}
-
-function guardar() {
-  if (!db) return;
-  guardando = true; updInd();
-  db.ref("prode2026excel/resultados").set(resultados);
-  db.ref("prode2026excel/equipos").set(equiposElim, function() {
-    guardando = false; updInd();
-  });
-}
+// Pronosticos eliminatorias: { cod: { jugador: "L"/"E"/"V" } }
+var pronsElim   = {};
+var jugadorSel  = JUGADORES[0];
 
 function parseRes(str) {
   if (!str || !str.trim()) return null;
@@ -201,15 +197,26 @@ function calcPts(signo, pron) {
 function getLocalNom(p) { return (equiposElim[p.cod] && equiposElim[p.cod].local) ? equiposElim[p.cod].local : p.local; }
 function getVisNom(p)   { return (equiposElim[p.cod] && equiposElim[p.cod].vis)   ? equiposElim[p.cod].vis   : p.vis;   }
 
+function getPronElim(cod, jugador) {
+  return (pronsElim[cod] && pronsElim[cod][jugador]) ? pronsElim[cod][jugador] : "";
+}
+
 function getTabla() {
-  return JUGADORES.map(function(j, ji) {
+  return JUGADORES.map(function(j) {
     var pts=0, ac=0, jug=0;
     PARTIDOS.forEach(function(p) {
-      if (!p.prons) return;
       var r = parseRes(resultados[p.cod]);
       if (!r) return;
+      var pron;
+      if (p.prons) {
+        var ji = JUGADORES.indexOf(j);
+        pron = p.prons[ji];
+      } else {
+        pron = getPronElim(p.cod, j);
+      }
+      if (!pron) return;
       jug++;
-      var pu = calcPts(r.signo, p.prons[ji]);
+      var pu = calcPts(r.signo, pron);
       pts += pu; if (pu===1) ac++;
     });
     return {jugador:j, pts:pts, aciertos:ac, jugados:jug};
@@ -220,6 +227,17 @@ function thJug() {
   var h = "";
   JUGADORES.forEach(function(j){ h += "<th>"+j+"</th>"; });
   return h;
+}
+
+function selPronHtml(p) {
+  var actual = getPronElim(p.cod, jugadorSel);
+  var opts = ["", "L", "E", "V"].map(function(v) {
+    var label = v === "" ? "-" : v;
+    var sel = v === actual ? " selected" : "";
+    return "<option value='"+v+"'"+sel+">"+label+"</option>";
+  }).join("");
+  var cls = "pron-select" + (actual === "L" ? " psL" : actual === "E" ? " psE" : actual === "V" ? " psV" : "");
+  return "<select class='"+cls+"' data-cod='"+p.cod+"' data-elimpron='1'>"+opts+"</select>";
 }
 
 function renderFila(p, conProns) {
@@ -253,6 +271,14 @@ function renderFila(p, conProns) {
       var ptxt   = pts!==null ? " <b>("+pts+")</b>" : "";
       h += "<td class='"+pron+pcls+"'>"+pron+ptxt+"</td>";
     });
+  } else if (esElim) {
+    // Columna de pronostico editable para el jugador seleccionado
+    var miPron = getPronElim(p.cod, jugadorSel);
+    var pts    = r ? calcPts(r.signo, miPron) : null;
+    var pcls   = pts===1 ? " pt1" : pts===0 ? " pt0" : "";
+    var ptxt   = pts!==null ? " <b>("+pts+"pt)</b>" : "";
+    h += "<td>"+selPronHtml(p)+"</td>";
+    h += "<td class='"+pcls+"' style='text-align:center'>"+(miPron?miPron+ptxt:"-")+"</td>";
   }
   return h + "</tr>";
 }
@@ -282,7 +308,7 @@ function renderFixture() {
     var ps = PARTIDOS.filter(function(p){ return p.fase===f.key; });
     if (!ps.length) return;
     html += "<h2>"+f.label+" - resultado 90+supl sin penales (empate valido)</h2>";
-    html += "<table><thead><tr><th>Fecha</th><th>Sede</th><th>Cod</th><th>Local (editable)</th><th>Result.</th><th>Visitante (editable)</th></tr></thead><tbody>";
+    html += "<table><thead><tr><th>Fecha</th><th>Sede</th><th>Cod</th><th>Local (editable)</th><th>Result.</th><th>Visitante (editable)</th><th>Tu pronostico</th><th>Pts</th></tr></thead><tbody>";
     ps.forEach(function(p){ html += renderFila(p, false); });
     html += "</tbody></table>";
   });
@@ -307,8 +333,7 @@ function bindEvents() {
         this.className = "res-input err";
         return;
       }
-      guardar();
-      actualizarCeldas();
+      renderFixture();
       renderTabla();
     };
   });
@@ -319,29 +344,17 @@ function bindEvents() {
       var eq  = this.getAttribute("data-eq");
       if (!equiposElim[cod]) equiposElim[cod] = {};
       equiposElim[cod][eq] = this.value;
-      guardar();
     };
   });
-}
 
-function actualizarCeldas() {
-  PARTIDOS.forEach(function(p) {
-    if (!p.prons) return;
-    var r = parseRes(resultados[p.cod]);
-    var inputs = document.querySelectorAll("input.res-input[data-cod='"+p.cod+"']");
-    if (!inputs.length) return;
-    var fila = inputs[0].closest("tr");
-    if (!fila) return;
-    var celdas = fila.querySelectorAll("td");
-    JUGADORES.forEach(function(j, ji) {
-      var pron  = p.prons[ji];
-      var pts   = r ? calcPts(r.signo, pron) : null;
-      var pcls  = pts===1 ? " pt1" : pts===0 ? " pt0" : " pt-vacio";
-      var celda = celdas[6 + ji];
-      if (!celda) return;
-      celda.className = pron + pcls;
-      celda.innerHTML = pron + (pts!==null ? " <b>("+pts+")</b>" : "");
-    });
+  document.querySelectorAll("select[data-elimpron]").forEach(function(sel) {
+    sel.onchange = function() {
+      var cod = this.getAttribute("data-cod");
+      if (!pronsElim[cod]) pronsElim[cod] = {};
+      pronsElim[cod][jugadorSel] = this.value;
+      renderFixture();
+      renderTabla();
+    };
   });
 }
 
@@ -359,37 +372,28 @@ function renderTabla() {
     html += "<td style='text-align:center'><span class='pts-badge'>"+row.pts+"</span></td>";
     html += "</tr>";
   });
-  html += "</tbody></table><p style='color:#888;font-size:11px;margin-top:8px'>Puntaje calculado sobre partidos con resultado cargado.</p>";
+  html += "</tbody></table><p style='color:#888;font-size:11px;margin-top:8px'>Puntaje calculado sobre partidos con resultado cargado (grupos + eliminatorias).</p>";
   document.getElementById("tabla-pos").innerHTML = html;
 }
 
-// INIT
-window.onload = function() {
-  try {
-    firebase.initializeApp({
-      apiKey:        "AIzaSyAJOLlIHvsTeeLkBBCs3xIaSp2hNP19k1o",
-      databaseURL:   "https://prode-boscoso-default-rtdb.firebaseio.com",
-      projectId:     "prode-boscoso",
-      authDomain:    "prode-boscoso.firebaseapp.com",
-      storageBucket: "prode-boscoso.appspot.com"
-    });
-    db = firebase.database();
-    db.ref("prode2026excel").on("value", function(snap) {
-      var data = snap.val();
-      if (data) {
-        if (data.resultados) resultados  = data.resultados;
-        if (data.equipos)    equiposElim = data.equipos;
-      }
-      renderFixture();
-      renderTabla();
-      updInd();
-    });
-  } catch(e) {
-    console.error("Firebase error:", e);
+function initSelectorJugador() {
+  var sel = document.getElementById("sel-jugador");
+  JUGADORES.forEach(function(j) {
+    var o = document.createElement("option");
+    o.value = j; o.text = j;
+    sel.appendChild(o);
+  });
+  sel.value = jugadorSel;
+  sel.onchange = function() {
+    jugadorSel = this.value;
     renderFixture();
-    renderTabla();
-  }
-};
+  };
+}
+
+// INIT
+initSelectorJugador();
+renderFixture();
+renderTabla();
 </script>
 </body>
 </html>
