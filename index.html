@@ -6,6 +6,7 @@
 <title>PRODE Mundial 2026</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: Arial, sans-serif; font-size: 11px; background: #f0f4f8; color: #222; }
@@ -44,6 +45,8 @@ td { border: 1px solid #ccc; padding: 3px 6px; white-space: nowrap; }
 .pos-2 { background: #f5f5f5; }
 .pos-3 { background: #fdf0e0; }
 .pts-badge { background: #1a3a6a; color: #f5c518; padding: 2px 10px; border-radius: 12px; font-weight: bold; font-size: 13px; }
+.club-tag { color: #888; font-size: 10px; font-weight: normal; }
+#chart-container { background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 14px; margin-top: 16px; max-width: 900px; }
 .jugador-bar { background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 8px 12px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .jugador-bar label { font-weight: bold; font-size: 12px; }
 .jugador-bar select { font-size: 13px; padding: 4px 8px; border-radius: 4px; border: 1px solid #aaa; }
@@ -61,10 +64,19 @@ td { border: 1px solid #ccc; padding: 3px 6px; white-space: nowrap; }
 <div id="fixture-container">Cargando datos...</div>
 <h2>TABLA DE POSICIONES</h2>
 <div id="tabla-pos"></div>
+<h2>EVOLUCION DE PUNTOS</h2>
+<div id="chart-container"><canvas id="chart-evolucion" height="90"></canvas></div>
 </div>
 
 <script>
 var JUGADORES = ["Angel","Augusto","Carolina","Constanza","Gabriela","Guillermina","Ivan","Lila","Liliana","Lucia","Magali","Mariano","Matias","Pablo","Ricardo","Silvio"];
+
+var CLUBES = {
+  "Angel":"River Plate","Augusto":"Racing","Carolina":"San Lorenzo","Constanza":"San Lorenzo",
+  "Gabriela":"River Plate","Guillermina":"Boca Jrs.","Ivan":"River Plate","Lila":"River Plate",
+  "Liliana":"Huracan","Lucia":"San Lorenzo","Magali":"River Plate","Mariano":"San Martin SJ",
+  "Matias":"San Lorenzo","Pablo":"River Plate","Ricardo":"Boca Jrs.","Silvio":"River Plate"
+};
 
 var PARTIDOS = [
   {cod:"A1",  grupo:"A", fecha:"jue 11/06 16:00", sede:"Azteca Mexico",      local:"Mexico",         vis:"Sudafrica",       prons:["L","L","E","L","L","L","L","L","E","L","L","E","L","L","L","L"]},
@@ -128,7 +140,7 @@ var PARTIDOS = [
   {cod:"J5",  grupo:"J", fecha:"sab 27/06 23:00", sede:"Dallas",             local:"Jordania",       vis:"Argentina",       prons:["V","V","V","V","V","V","V","V","V","V","V","V","V","V","V","V"]},
   {cod:"J6",  grupo:"J", fecha:"sab 27/06 23:00", sede:"Kansas City",        local:"Argelia",        vis:"Austria",         prons:["V","V","E","V","V","E","E","E","V","V","V","E","L","V","V","E"]},
   {cod:"K1",  grupo:"K", fecha:"mie 17/06 13:00", sede:"Houston",            local:"Portugal",       vis:"Rep. D. Congo",   prons:["L","L","L","L","L","L","L","L","L","L","L","E","L","L","L","L"]},
-  {cod:"K2",  grupo:"K", fecha:"mie 17/06 23:00", sede:"Cd. Mexico",         local:"Uzbekistan",     vis:"Colombia",        prons:["V","V","V","V","V","V","V","V","V","V","V","E","V","V","V","V"]},
+  {cod:"K2",  grupo:"K", fecha:"mie 17/06 23:00", sede:"Cd. Mexico",         local:"Uzbekistan",     vis:"Colombia",        prons:["V","V","V","V","V","V","L","V","V","V","V","E","V","V","V","V"]},
   {cod:"K3",  grupo:"K", fecha:"mar 23/06 14:00", sede:"Houston",            local:"Portugal",       vis:"Uzbekistan",      prons:["L","L","L","L","E","L","L","L","L","L","L","L","L","L","L","L"]},
   {cod:"K4",  grupo:"K", fecha:"mar 23/06 23:00", sede:"Guadalajara",        local:"Colombia",       vis:"Rep. D. Congo",   prons:["L","L","L","L","E","L","L","L","L","L","L","L","L","L","L","L"]},
   {cod:"K5",  grupo:"K", fecha:"sab 27/06 20:30", sede:"Miami",              local:"Colombia",       vis:"Portugal",        prons:["E","E","E","V","E","V","V","L","V","E","E","E","E","E","E","V"]},
