@@ -421,7 +421,7 @@ function renderFixture() {
     if (!ps.length) return;
     var tieneProns = ps.some(function(p){ return p.prons; });
     html += "<h2>"+f.label+" - resultado 90+supl sin penales (empate valido)</h2>";
-    html += "<table><thead><tr><th>Fecha</th><th>Sede</th><th>Cod</th><th>Local (editable)</th><th>Result.</th><th>Visitante (editable)</th>";
+    html += "<table><thead><tr><th>Fecha</th><th>Sede</th><th>Cod</th><th>Local</th><th>Result.</th><th>Visitante</th>";
     html += tieneProns ? thJug() : thJug();
     html += "</tr></thead><tbody>";
     ps.forEach(function(p){ html += renderFila(p, false); });
