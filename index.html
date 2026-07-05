@@ -191,7 +191,7 @@ var PARTIDOS = [
   {cod:"P95",  fase:"octavos", fecha:"mar 07/07 13:00", sede:"Atlanta",      local:"Gan. P86 Argentina",      vis:"Gan. P88 Egipto",           prons:["L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L"]},
   {cod:"P96",  fase:"octavos", fecha:"mar 07/07 17:00", sede:"Vancouver",    local:"Gan. P85 Suiza",          vis:"Gan. P87 Colombia",         prons:["V","E","V","V","V","V","V","V","V","V","V","V","V","V","V","V"]},
   // ── CUARTOS ─────────────────────────────────────────────────────────────────
-  {cod:"P97",  fase:"cuartos", fecha:"jue 09/07 17:00", sede:"Boston",       local:"Gan. P89 Francia",    vis:"Gan. P90 Marruecos"},
+  {cod:"P97",  fase:"cuartos", fecha:"jue 09/07 17:00", sede:"Boston",       local:"Gan. P89",    vis:"Gan. P90"},
   {cod:"P98",  fase:"cuartos", fecha:"vie 10/07 16:00", sede:"Los Angeles",  local:"Gan. P93",    vis:"Gan. P94"},
   {cod:"P99",  fase:"cuartos", fecha:"sab 11/07 18:00", sede:"Miami",        local:"Gan. P91",    vis:"Gan. P92"},
   {cod:"P100", fase:"cuartos", fecha:"sab 11/07 22:00", sede:"Kansas City",  local:"Gan. P95",    vis:"Gan. P96"},
@@ -286,12 +286,25 @@ var COLORES_JUG = [
 
 var raceStep     = 0;
 var raceTimer    = null;
-var raceInterval = 900; // ms entre pasos
+var raceInterval = 600; // ms entre pasos
 var chartInstance = null;
 
 function getRaceSteps() {
-  // Pasos: estado inicial (todos en 0) + un paso por cada partido jugado en orden
-  var jugados = PARTIDOS.filter(function(p){ return parseRes(resultados[p.cod]); });
+  // Ordena los partidos jugados por fechaISO real
+  function parseFechaPartido(p) {
+    // Convierte "jue 11/06 16:00" → Date comparable
+    var m = p.fecha.match(/(\d+)\/(\d+)\s+(\d+):(\d+)/);
+    if (!m) return new Date(9999,0,1);
+    var dia = +m[1], mes = +m[2]-1, h = +m[3], min = +m[4];
+    // El año: si mes >= 6 es 2026, igual para todo el torneo
+    return new Date(2026, mes, dia, h, min);
+  }
+
+  var jugados = PARTIDOS
+    .filter(function(p){ return parseRes(resultados[p.cod]); })
+    .slice()
+    .sort(function(a, b){ return parseFechaPartido(a) - parseFechaPartido(b); });
+
   var acumulado = {};
   JUGADORES.forEach(function(j){ acumulado[j] = 0; });
 
@@ -355,7 +368,7 @@ function renderRaceStep(pasos, step) {
       options: {
         indexAxis: "y",
         responsive: true,
-        animation: { duration: raceInterval * 0.8, easing: "easeInOutQuart" },
+        animation: { duration: raceInterval * 0.75, easing: "easeInOutQuart" },
         plugins: {
           legend: { display: false },
           tooltip: {
