@@ -44,8 +44,14 @@ td { border: 1px solid #ccc; padding: 3px 6px; white-space: nowrap; }
 .pos-3 { background: #fdf0e0; }
 .pts-badge { background: #1a3a6a; color: #f5c518; padding: 2px 10px; border-radius: 12px; font-weight: bold; font-size: 13px; }
 .club-tag { color: #888; font-size: 10px; font-weight: normal; }
-#chart-container { background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 14px; margin-top: 16px; max-width: 900px; position: relative; height: 420px; }
-#chart-evolucion { width: 100% !important; height: 380px !important; }
+#chart-container { background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 14px; margin-top: 16px; max-width: 900px; }
+#chart-evolucion { width: 100% !important; }
+#chart-controls { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+#chart-controls button { background: #1a3a6a; color: #f5c518; border: none; border-radius: 6px; padding: 5px 14px; font-size: 13px; cursor: pointer; font-weight: bold; }
+#chart-controls button:hover { background: #0d2045; }
+#chart-slider { flex: 1; min-width: 150px; }
+#chart-label { font-size: 12px; color: #555; min-width: 120px; }
+#chart-step-info { font-size: 11px; color: #888; }
 #ind-firebase { font-size: 12px; font-weight: normal; margin-left: 20px; letter-spacing: 0; }
 </style>
 </head>
@@ -59,8 +65,19 @@ td { border: 1px solid #ccc; padding: 3px 6px; white-space: nowrap; }
 <div id="fixture-container">Cargando datos...</div>
 <h2>TABLA DE POSICIONES</h2>
 <div id="tabla-pos"></div>
-<h2>EVOLUCION DE PUNTOS</h2>
-<div id="chart-container"><canvas id="chart-evolucion"></canvas></div>
+<h2>EVOLUCION DE PUNTOS — BAR CHART RACE</h2>
+<div id="chart-container">
+  <div id="chart-controls">
+    <button id="btn-inicio">&#9198; Inicio</button>
+    <button id="btn-play">&#9654; Play</button>
+    <button id="btn-prev">&#9664; Ant</button>
+    <button id="btn-next">Sig &#9654;</button>
+    <input id="chart-slider" type="range" min="0" value="0" step="1"/>
+    <span id="chart-label">-</span>
+    <span id="chart-step-info"></span>
+  </div>
+  <canvas id="chart-evolucion"></canvas>
+</div>
 </div>
 
 <script>
@@ -261,44 +278,164 @@ function getEvolucion() {
   return { labels: labels, series: series };
 }
 
-var COLORES = ["#e6194b","#3cb44b","#4363d8","#f58231","#911eb4","#46f0f0","#f032e6","#bcf60c",
-               "#fabebe","#008080","#e6beff","#9a6324","#800000","#aaffc3","#808000","#000075"];
+// ── BAR CHART RACE ───────────────────────────────────────────────────────────
+var COLORES_JUG = [
+  "#e6194b","#3cb44b","#4363d8","#f58231","#911eb4","#00bcd4","#f032e6","#8bc34a",
+  "#e91e63","#009688","#9c27b0","#ff9800","#795548","#607d8b","#f44336","#2196f3"
+];
 
+var raceStep     = 0;
+var raceTimer    = null;
+var raceInterval = 900; // ms entre pasos
 var chartInstance = null;
-function renderChart() {
-  if (typeof Chart === "undefined") { setTimeout(renderChart, 300); return; }
-  var ev  = getEvolucion();
+
+function getRaceSteps() {
+  // Pasos: estado inicial (todos en 0) + un paso por cada partido jugado en orden
+  var jugados = PARTIDOS.filter(function(p){ return parseRes(resultados[p.cod]); });
+  var acumulado = {};
+  JUGADORES.forEach(function(j){ acumulado[j] = 0; });
+
+  var pasos = [{ label: "Inicio", puntos: JUGADORES.map(function(){ return 0; }) }];
+
+  jugados.forEach(function(p) {
+    var r = parseRes(resultados[p.cod]);
+    JUGADORES.forEach(function(j) {
+      var pron = p.prons ? p.prons[JUGADORES.indexOf(j)] : getPronElim(p.cod, j);
+      var pu   = pron ? (calcPts(r.signo, pron) || 0) : 0;
+      acumulado[j] += pu;
+    });
+    pasos.push({
+      label:  p.cod + " · " + p.local + " vs " + p.vis,
+      puntos: JUGADORES.map(function(j){ return acumulado[j]; })
+    });
+  });
+
+  return pasos;
+}
+
+function renderRaceStep(pasos, step) {
+  if (typeof Chart === "undefined") { setTimeout(function(){ renderRaceStep(pasos, step); }, 300); return; }
+  if (!pasos.length) return;
+
+  var paso = pasos[step];
+
+  // Ordenar jugadores por puntaje descendente para este paso
+  var orden = JUGADORES.map(function(j, i){ return { j: j, pts: paso.puntos[i], ci: i }; })
+    .sort(function(a, b){ return b.pts - a.pts || a.j.localeCompare(b.j); });
+
+  var labels   = orden.map(function(o){ return o.j + " (" + CLUBES[o.j] + ")"; });
+  var data     = orden.map(function(o){ return o.pts; });
+  var colores  = orden.map(function(o){ return COLORES_JUG[o.ci % COLORES_JUG.length]; });
+  var maxPts   = Math.max.apply(null, data.concat([1]));
+
   var ctx = document.getElementById("chart-evolucion");
   if (!ctx) return;
-  if (!ev.labels.length) {
-    if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
-    var c2d = ctx.getContext("2d");
-    c2d.clearRect(0,0,ctx.width,ctx.height);
-    c2d.font = "13px Arial"; c2d.fillStyle = "#999";
-    c2d.fillText("Todavia no hay partidos con resultado cargado.", 10, 30);
-    return;
-  }
-  var datasets = JUGADORES.map(function(j, i) {
-    return { label:j, data:ev.series[j], borderColor:COLORES[i%COLORES.length],
-             backgroundColor:COLORES[i%COLORES.length], borderWidth:2, pointRadius:2, tension:0.15, fill:false };
-  });
-  if (chartInstance) chartInstance.destroy();
-  chartInstance = new Chart(ctx, {
-    type: "line",
-    data: { labels: ev.labels, datasets: datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: "nearest", intersect: false },
-      plugins: {
-        legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 10 } } },
-        tooltip: { mode: "index", intersect: false }
+
+  if (chartInstance) {
+    chartInstance.data.labels                        = labels;
+    chartInstance.data.datasets[0].data             = data;
+    chartInstance.data.datasets[0].backgroundColor  = colores;
+    chartInstance.data.datasets[0].borderColor      = colores;
+    chartInstance.options.scales.x.max              = maxPts + 2;
+    chartInstance.update();
+  } else {
+    chartInstance = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Puntos acumulados",
+          data: data,
+          backgroundColor: colores,
+          borderColor: colores,
+          borderWidth: 1,
+          borderRadius: 4
+        }]
       },
-      scales: {
-        x: { title: { display: true, text: "Partido (codigo)" }, ticks: { font: { size: 9 } } },
-        y: { title: { display: true, text: "Puntos acumulados" }, beginAtZero: true, ticks: { stepSize: 1 } }
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        animation: { duration: raceInterval * 0.8, easing: "easeInOutQuart" },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx){ return " " + ctx.parsed.x + " pts"; }
+            }
+          },
+          title: { display: false }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            max: maxPts + 2,
+            title: { display: true, text: "Puntos acumulados" },
+            ticks: { stepSize: 1 }
+          },
+          y: { ticks: { font: { size: 11 } } }
+        }
       }
-    }
-  });
+    });
+  }
+
+  // Actualizar controles
+  var slider = document.getElementById("chart-slider");
+  var label  = document.getElementById("chart-label");
+  var info   = document.getElementById("chart-step-info");
+  if (slider) { slider.max = pasos.length - 1; slider.value = step; }
+  if (label)  label.textContent  = paso.label;
+  if (info)   info.textContent   = "Partido " + step + " de " + (pasos.length - 1);
+}
+
+function renderChart() {
+  var pasos = getRaceSteps();
+  if (raceStep >= pasos.length) raceStep = pasos.length - 1;
+  if (raceStep < 0) raceStep = 0;
+  renderRaceStep(pasos, raceStep);
+}
+
+function bindChartControls() {
+  var btnPlay   = document.getElementById("btn-play");
+  var btnInicio = document.getElementById("btn-inicio");
+  var btnPrev   = document.getElementById("btn-prev");
+  var btnNext   = document.getElementById("btn-next");
+  var slider    = document.getElementById("chart-slider");
+
+  if (btnInicio) btnInicio.onclick = function() {
+    stopRace(); raceStep = 0; renderChart();
+  };
+  if (btnPrev) btnPrev.onclick = function() {
+    stopRace(); if (raceStep > 0) { raceStep--; renderChart(); }
+  };
+  if (btnNext) btnNext.onclick = function() {
+    stopRace();
+    var pasos = getRaceSteps();
+    if (raceStep < pasos.length - 1) { raceStep++; renderChart(); }
+  };
+  if (btnPlay) btnPlay.onclick = function() {
+    if (raceTimer) { stopRace(); }
+    else           { startRace(); }
+  };
+  if (slider) slider.oninput = function() {
+    stopRace(); raceStep = +this.value; renderChart();
+  };
+}
+
+function startRace() {
+  var btn = document.getElementById("btn-play");
+  if (btn) btn.textContent = "⏸ Pausa";
+  raceTimer = setInterval(function() {
+    var pasos = getRaceSteps();
+    if (raceStep >= pasos.length - 1) { stopRace(); return; }
+    raceStep++;
+    renderChart();
+  }, raceInterval);
+}
+
+function stopRace() {
+  if (raceTimer) { clearInterval(raceTimer); raceTimer = null; }
+  var btn = document.getElementById("btn-play");
+  if (btn) btn.textContent = "▶ Play";
 }
 
 function thJug() {
@@ -441,11 +578,11 @@ window.onload = function() {
         if (data.equipos)    equiposElim = data.equipos;
         if (data.pronsElim)  pronsElim   = data.pronsElim;
       }
-      renderFixture(); renderTabla(); renderChart(); updInd();
+      renderFixture(); renderTabla(); renderChart(); bindChartControls(); updInd();
     });
   } catch(e) {
     console.error("Firebase error:", e);
-    renderFixture(); renderTabla(); renderChart();
+    renderFixture(); renderTabla(); renderChart(); bindChartControls();
   }
 };
 </script>
