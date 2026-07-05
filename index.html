@@ -27,8 +27,6 @@ td { border: 1px solid #ccc; padding: 3px 6px; white-space: nowrap; }
 .res-input { width: 62px; border: 1px solid #aaa; border-radius: 4px; padding: 2px 4px; text-align: center; font-size: 12px; font-family: monospace; background: #f9f9f9; }
 .res-input.ok { background: #d4edda; border-color: #28a745; font-weight: bold; }
 .res-input.err { background: #f8d7da; border-color: #dc3545; }
-.eq-input { width: 130px; border: 1px solid #aaa; border-radius: 4px; padding: 2px 5px; font-size: 11px; background: #fffbe6; font-family: Arial, sans-serif; }
-.eq-input:focus { border-color: #f5c518; outline: none; background: #fff; }
 .pron-select { width: 48px; border: 1px solid #aaa; border-radius: 3px; padding: 1px; text-align: center; font-size: 10px; font-weight: bold; background: #fff; }
 .pron-select.psL { background: #d4edda; border-color: #28a745; color: #155724; }
 .pron-select.psE { background: #fff3cd; border-color: #f5c518; color: #856404; }
@@ -48,9 +46,6 @@ td { border: 1px solid #ccc; padding: 3px 6px; white-space: nowrap; }
 .club-tag { color: #888; font-size: 10px; font-weight: normal; }
 #chart-container { background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 14px; margin-top: 16px; max-width: 900px; position: relative; height: 420px; }
 #chart-evolucion { width: 100% !important; height: 380px !important; }
-.jugador-bar { background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 8px 12px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.jugador-bar label { font-weight: bold; font-size: 12px; }
-.jugador-bar select { font-size: 13px; padding: 4px 8px; border-radius: 4px; border: 1px solid #aaa; }
 #ind-firebase { font-size: 12px; font-weight: normal; margin-left: 20px; letter-spacing: 0; }
 </style>
 </head>
@@ -59,9 +54,8 @@ td { border: 1px solid #ccc; padding: 3px 6px; white-space: nowrap; }
 <div class="container">
 <div class="info">
   Resultados fase de grupos: escribi el marcador en formato 2-1 y presiona Enter o clic en otro lado. La tabla se actualiza sola.<br>
-  Eliminatorias: los equipos son editables. El resultado es el de 90 minutos + suplementario sin penales (puede quedar empate). Cada jugador carga su pronostico L/E/V en su propia columna.
+  Eliminatorias: el resultado es el de 90 minutos + suplementario sin penales (puede quedar empate). Cada jugador carga su pronostico L/E/V en su propia columna.
 </div>
-
 <div id="fixture-container">Cargando datos...</div>
 <h2>TABLA DE POSICIONES</h2>
 <div id="tabla-pos"></div>
@@ -80,6 +74,7 @@ var CLUBES = {
 };
 
 var PARTIDOS = [
+  // ── GRUPOS ──────────────────────────────────────────────────────────────────
   {cod:"A1",  grupo:"A", fecha:"jue 11/06 16:00", sede:"Azteca Mexico",      local:"Mexico",         vis:"Sudafrica",       prons:["L","L","E","L","L","L","L","L","E","L","L","E","L","L","L","L"]},
   {cod:"A2",  grupo:"A", fecha:"jue 11/06 23:00", sede:"Guadalajara",        local:"Corea del Sur",  vis:"Rep. Checa",      prons:["E","L","L","L","E","L","E","V","L","V","L","E","L","E","E","V"]},
   {cod:"A3",  grupo:"A", fecha:"jue 18/06 13:00", sede:"Atlanta",            local:"Rep. Checa",     vis:"Sudafrica",       prons:["L","E","L","E","E","V","E","V","E","V","L","E","E","L","L","E"]},
@@ -152,43 +147,47 @@ var PARTIDOS = [
   {cod:"L4",  grupo:"L", fecha:"mar 23/06 20:00", sede:"Toronto",            local:"Panama",         vis:"Croacia",         prons:["V","V","V","V","V","V","V","V","V","V","V","V","V","V","V","V"]},
   {cod:"L5",  grupo:"L", fecha:"sab 27/06 18:00", sede:"NY New Jersey",      local:"Panama",         vis:"Inglaterra",      prons:["V","V","V","V","V","V","V","L","V","V","V","V","V","V","V","V"]},
   {cod:"L6",  grupo:"L", fecha:"sab 27/06 18:00", sede:"Philadelphia",       local:"Croacia",        vis:"Ghana",           prons:["E","L","E","L","L","L","L","L","E","L","L","E","L","E","L","L"]},
-  {cod:"P73",  fase:"16avos",  fecha:"dom 28/06 16:00", sede:"Los Angeles",   local:"Sudafrica",       vis:"Canada",          prons:["V","V","E","V","V","V","E","L","V","L","V","L","E","V","V","V"]},
-  {cod:"P76",  fase:"16avos",  fecha:"lun 29/06 14:00", sede:"Houston",        local:"Brasil",          vis:"Japon",           prons:["L","E","L","L","V","V","L","L","L","L","E","L","L","L","L","L"]},
-  {cod:"P74",  fase:"16avos",  fecha:"lun 29/06 17:30", sede:"Boston",         local:"Alemania",        vis:"Paraguay",        prons:["L","L","L","L","L","L","L","E","L","L","L","L","L","L","L","L"]},
-  {cod:"P75",  fase:"16avos",  fecha:"lun 29/06 22:00", sede:"Monterrey",      local:"Paises Bajos",    vis:"Marruecos",       prons:["E","L","E","V","V","L","L","L","L","L","E","L","E","E","L","V"]},
-  {cod:"P78",  fase:"16avos",  fecha:"mar 30/06 14:00", sede:"Dallas",         local:"Costa Marfil",    vis:"Noruega",         prons:["E","V","E","V","V","V","V","E","V","V","V","V","V","V","V","V"]},
-  {cod:"P77",  fase:"16avos",  fecha:"mar 30/06 18:00", sede:"NY New Jersey",  local:"Francia",         vis:"Suecia",          prons:["L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L"]},
-  {cod:"P79",  fase:"16avos",  fecha:"mar 30/06 22:00", sede:"Azteca Mexico",  local:"Mexico",          vis:"Ecuador",     prons:["L","E","E","L","L","L","L","L","L","L","V","V","L","L","L","L"]},
-  {cod:"P80",  fase:"16avos",  fecha:"mie 01/07 13:00", sede:"Atlanta",        local:"Inglaterra",       vis:"Rep. D. Congo",     prons:["L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L"]},
-  {cod:"P82",  fase:"16avos",  fecha:"mie 01/07 17:00", sede:"Seattle",        local:"Belgica",         vis:"Senegal",     prons:["L","E","E","L","E","E","L","V","L","L","V","L","E","V","L","L"]},
-  {cod:"P81",  fase:"16avos",  fecha:"mie 01/07 21:00", sede:"San Francisco",  local:"Estados Unidos",  vis:"Bosnia",          prons:["L","L","L","L","L","L","L","E","L","L","L","L","L","L","L","L"]},
-  {cod:"P84",  fase:"16avos",  fecha:"jue 02/07 16:00", sede:"Los Angeles",    local:"España",          vis:"Austria",       prons:["L","L","L","L","L","L","L","L","L","L","L","L","L","L","V","L"]},
-  {cod:"P83",  fase:"16avos",  fecha:"jue 02/07 20:00", sede:"Toronto",        local:"Portugal",       vis:"Croacia",       prons:["E","E","E","V","E","E","E","E","L","E","E","L","E","E","V","L"]},
-  {cod:"P85",  fase:"16avos",  fecha:"vie 03/07 00:00", sede:"Vancouver",      local:"Suiza",           vis:"Argelia",     prons:["L","L","L","L","L","V","L","V","L","L","V","L","L","L","V","V"]},
-  {cod:"P88",  fase:"16avos",  fecha:"vie 03/07 15:00", sede:"Dallas",         local:"Australia",       vis:"Egipto",          prons:["V","L","E","L","V","L","E","E","L","V","V","V","L","E","V","L"]},
-  {cod:"P86",  fase:"16avos",  fecha:"vie 03/07 19:00", sede:"Miami",          local:"Argentina",       vis:"Cabo Verde",      prons:["L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L"]},
-  {cod:"P87",  fase:"16avos",  fecha:"vie 03/07 22:30", sede:"Kansas City",    local:"Colombia",       vis:"Ghana",     prons:["L","E","L","L","L","V","L","L","L","L","L","V","L","L","L","L"]},
-  {cod:"P90",  fase:"octavos", fecha:"sab 04/07 14:00", sede:"Houston",            local:"Gan. P73 Canada",    vis:"Gan. P75 Marruecos"},
-  {cod:"P89",  fase:"octavos", fecha:"sab 04/07 18:00", sede:"Philadelphia",       local:"Gan. P74 Paraguay",    vis:"Gan. P77 Francia"},
-  {cod:"P91",  fase:"octavos", fecha:"dom 05/07 17:00", sede:"NY New Jersey",      local:"Gan. P76 Brasil",    vis:"Gan. P78 Noruega"},
-  {cod:"P92",  fase:"octavos", fecha:"dom 05/07 21:00", sede:"Azteca Mexico",      local:"Gan. P79 Mexico",    vis:"Gan. P80 Inglaterra"},
-  {cod:"P93",  fase:"octavos", fecha:"lun 06/07 16:00", sede:"Dallas",             local:"Gan. P83 Portugal",    vis:"Gan. P84 España"},
-  {cod:"P94",  fase:"octavos", fecha:"lun 06/07 21:00", sede:"Seattle",            local:"Gan. P81 Estados Unidos",    vis:"Gan. P82 Belgica"},
-  {cod:"P95",  fase:"octavos", fecha:"mar 07/07 13:00", sede:"Atlanta",            local:"Gan. P86 Argentina",    vis:"Gan. P88 Egipto"},
-  {cod:"P96",  fase:"octavos", fecha:"mar 07/07 17:00", sede:"Vancouver",          local:"Gan. P85 Suiza",    vis:"Gan. P87 Colombia"},
-  {cod:"P97",  fase:"cuartos", fecha:"jue 09/07 17:00", sede:"Boston",             local:"Gan. P89",    vis:"Gan. P90"},
-  {cod:"P98",  fase:"cuartos", fecha:"vie 10/07 16:00", sede:"Los Angeles",        local:"Gan. P93",    vis:"Gan. P94"},
-  {cod:"P99",  fase:"cuartos", fecha:"sab 11/07 18:00", sede:"Miami",              local:"Gan. P91",    vis:"Gan. P92"},
-  {cod:"P100", fase:"cuartos", fecha:"sab 11/07 22:00", sede:"Kansas City",        local:"Gan. P95",    vis:"Gan. P96"},
-  {cod:"P101", fase:"semis",   fecha:"mar 14/07 16:00", sede:"Dallas",             local:"Gan. P97",    vis:"Gan. P98"},
-  {cod:"P102", fase:"semis",   fecha:"mie 15/07 16:00", sede:"Atlanta",            local:"Gan. P99",    vis:"Gan. P100"},
-  {cod:"P103", fase:"3er",     fecha:"sab 18/07 18:00", sede:"Miami",              local:"Perd. P101",  vis:"Perd. P102"},
-  {cod:"P104", fase:"final",   fecha:"dom 19/07 16:00", sede:"NY New Jersey",      local:"Gan. P101",   vis:"Gan. P102"}
+  // ── 16AVOS ──────────────────────────────────────────────────────────────────
+  {cod:"P73",  fase:"16avos", fecha:"dom 28/06 16:00", sede:"Los Angeles",   local:"Sudafrica",        vis:"Canada",          prons:["V","V","E","V","V","V","E","L","V","L","V","L","E","V","V","V"]},
+  {cod:"P76",  fase:"16avos", fecha:"lun 29/06 14:00", sede:"Houston",       local:"Brasil",           vis:"Japon",           prons:["L","E","L","L","V","V","L","L","L","L","E","L","L","L","L","L"]},
+  {cod:"P74",  fase:"16avos", fecha:"lun 29/06 17:30", sede:"Boston",        local:"Alemania",         vis:"Paraguay",        prons:["L","L","L","L","L","L","L","E","L","L","L","L","L","L","L","L"]},
+  {cod:"P75",  fase:"16avos", fecha:"lun 29/06 22:00", sede:"Monterrey",     local:"Paises Bajos",     vis:"Marruecos",       prons:["E","L","E","V","V","L","L","L","L","L","E","L","E","E","L","V"]},
+  {cod:"P78",  fase:"16avos", fecha:"mar 30/06 14:00", sede:"Dallas",        local:"Costa Marfil",     vis:"Noruega",         prons:["E","V","E","V","V","V","V","E","V","V","V","V","V","V","V","V"]},
+  {cod:"P77",  fase:"16avos", fecha:"mar 30/06 18:00", sede:"NY New Jersey", local:"Francia",          vis:"Suecia",          prons:["L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L"]},
+  {cod:"P79",  fase:"16avos", fecha:"mar 30/06 22:00", sede:"Azteca Mexico", local:"Mexico",           vis:"Ecuador",         prons:["L","E","E","L","L","L","L","L","L","L","V","V","L","L","L","L"]},
+  {cod:"P80",  fase:"16avos", fecha:"mie 01/07 13:00", sede:"Atlanta",       local:"Inglaterra",       vis:"Rep. D. Congo",   prons:["L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L"]},
+  {cod:"P82",  fase:"16avos", fecha:"mie 01/07 17:00", sede:"Seattle",       local:"Belgica",          vis:"Senegal",         prons:["L","E","E","L","E","E","L","V","L","L","V","L","E","V","L","L"]},
+  {cod:"P81",  fase:"16avos", fecha:"mie 01/07 21:00", sede:"San Francisco", local:"Estados Unidos",   vis:"Bosnia",          prons:["L","L","L","L","L","L","L","E","L","L","L","L","L","L","L","L"]},
+  {cod:"P84",  fase:"16avos", fecha:"jue 02/07 16:00", sede:"Los Angeles",   local:"España",           vis:"Austria",         prons:["L","L","L","L","L","L","L","L","L","L","L","L","L","L","V","L"]},
+  {cod:"P83",  fase:"16avos", fecha:"jue 02/07 20:00", sede:"Toronto",       local:"Portugal",         vis:"Croacia",         prons:["E","E","E","V","E","E","E","E","L","E","E","L","E","E","V","L"]},
+  {cod:"P85",  fase:"16avos", fecha:"vie 03/07 00:00", sede:"Vancouver",     local:"Suiza",            vis:"Argelia",         prons:["L","L","L","L","L","V","L","V","L","L","V","L","L","L","V","V"]},
+  {cod:"P88",  fase:"16avos", fecha:"vie 03/07 15:00", sede:"Dallas",        local:"Australia",        vis:"Egipto",          prons:["V","L","E","L","V","L","E","E","L","V","V","V","L","E","V","L"]},
+  {cod:"P86",  fase:"16avos", fecha:"vie 03/07 19:00", sede:"Miami",         local:"Argentina",        vis:"Cabo Verde",      prons:["L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L"]},
+  {cod:"P87",  fase:"16avos", fecha:"vie 03/07 22:30", sede:"Kansas City",   local:"Colombia",         vis:"Ghana",           prons:["L","E","L","L","L","V","L","L","L","L","L","V","L","L","L","L"]},
+  // ── OCTAVOS ─────────────────────────────────────────────────────────────────
+  {cod:"P90",  fase:"octavos", fecha:"sab 04/07 14:00", sede:"Houston",      local:"Gan. P73 Canada",         vis:"Gan. P75 Marruecos",        prons:["V","V","V","V","V","V","V","E","L","V","V","V","V","V","V","V"]},
+  {cod:"P89",  fase:"octavos", fecha:"sab 04/07 18:00", sede:"Philadelphia", local:"Gan. P74 Paraguay",       vis:"Gan. P77 Francia",          prons:["V","V","V","V","V","V","V","E","V","V","V","V","V","V","V","V"]},
+  {cod:"P91",  fase:"octavos", fecha:"dom 05/07 17:00", sede:"NY New Jersey",local:"Gan. P76 Brasil",         vis:"Gan. P78 Noruega",          prons:["L","V","E","L","E","E","L","L","E","E","E","L","E","L","L","L"]},
+  {cod:"P92",  fase:"octavos", fecha:"dom 05/07 21:00", sede:"Azteca Mexico",local:"Gan. P79 Mexico",         vis:"Gan. P80 Inglaterra",       prons:["V","V","V","V","L","L","V","L","V","V","L","V","E","L","L","V"]},
+  {cod:"P93",  fase:"octavos", fecha:"lun 06/07 16:00", sede:"Dallas",       local:"Gan. P83 Portugal",       vis:"Gan. P84 España",           prons:["V","V","E","E","V","V","V","E","V","E","V","V","V","V","V","L"]},
+  {cod:"P94",  fase:"octavos", fecha:"lun 06/07 21:00", sede:"Seattle",      local:"Gan. P81 Estados Unidos", vis:"Gan. P82 Belgica",          prons:["L","E","E","E","L","L","V","E","L","L","E","L","E","L","L","E"]},
+  {cod:"P95",  fase:"octavos", fecha:"mar 07/07 13:00", sede:"Atlanta",      local:"Gan. P86 Argentina",      vis:"Gan. P88 Egipto",           prons:["L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L"]},
+  {cod:"P96",  fase:"octavos", fecha:"mar 07/07 17:00", sede:"Vancouver",    local:"Gan. P85 Suiza",          vis:"Gan. P87 Colombia",         prons:["V","E","V","V","V","V","V","V","V","V","V","V","V","V","V","V"]},
+  // ── CUARTOS ─────────────────────────────────────────────────────────────────
+  {cod:"P97",  fase:"cuartos", fecha:"jue 09/07 17:00", sede:"Boston",       local:"Gan. P89 Francia",    vis:"Gan. P90 Marruecos"},
+  {cod:"P98",  fase:"cuartos", fecha:"vie 10/07 16:00", sede:"Los Angeles",  local:"Gan. P93",    vis:"Gan. P94"},
+  {cod:"P99",  fase:"cuartos", fecha:"sab 11/07 18:00", sede:"Miami",        local:"Gan. P91",    vis:"Gan. P92"},
+  {cod:"P100", fase:"cuartos", fecha:"sab 11/07 22:00", sede:"Kansas City",  local:"Gan. P95",    vis:"Gan. P96"},
+  // ── SEMIS ───────────────────────────────────────────────────────────────────
+  {cod:"P101", fase:"semis",   fecha:"mar 14/07 16:00", sede:"Dallas",       local:"Gan. P97",    vis:"Gan. P98"},
+  {cod:"P102", fase:"semis",   fecha:"mie 15/07 16:00", sede:"Atlanta",      local:"Gan. P99",    vis:"Gan. P100"},
+  // ── 3ER PUESTO Y FINAL ──────────────────────────────────────────────────────
+  {cod:"P103", fase:"3er",     fecha:"sab 18/07 18:00", sede:"Miami",        local:"Perd. P101",  vis:"Perd. P102"},
+  {cod:"P104", fase:"final",   fecha:"dom 19/07 16:00", sede:"NY New Jersey",local:"Gan. P101",   vis:"Gan. P102"}
 ];
 
 var resultados  = {};
 var equiposElim = {};
-// Pronosticos eliminatorias: { cod: { jugador: "L"/"E"/"V" } }
 var pronsElim   = {};
 var db          = null;
 var guardando   = false;
@@ -225,10 +224,7 @@ function calcPts(signo, pron) {
 
 function getLocalNom(p) { return (equiposElim[p.cod] && equiposElim[p.cod].local) ? equiposElim[p.cod].local : p.local; }
 function getVisNom(p)   { return (equiposElim[p.cod] && equiposElim[p.cod].vis)   ? equiposElim[p.cod].vis   : p.vis;   }
-
-function getPronElim(cod, jugador) {
-  return (pronsElim[cod] && pronsElim[cod][jugador]) ? pronsElim[cod][jugador] : "";
-}
+function getPronElim(cod, jugador) { return (pronsElim[cod] && pronsElim[cod][jugador]) ? pronsElim[cod][jugador] : ""; }
 
 function getTabla() {
   return JUGADORES.map(function(j) {
@@ -237,12 +233,8 @@ function getTabla() {
       var r = parseRes(resultados[p.cod]);
       if (!r) return;
       var pron;
-      if (p.prons) {
-        var ji = JUGADORES.indexOf(j);
-        pron = p.prons[ji];
-      } else {
-        pron = getPronElim(p.cod, j);
-      }
+      if (p.prons) { pron = p.prons[JUGADORES.indexOf(j)]; }
+      else         { pron = getPronElim(p.cod, j); }
       if (!pron) return;
       jug++;
       var pu = calcPts(r.signo, pron);
@@ -252,81 +244,50 @@ function getTabla() {
   }).sort(function(a,b){ return b.pts-a.pts || b.aciertos-a.aciertos; });
 }
 
-// Devuelve, para cada partido CON resultado cargado (en el orden definido en PARTIDOS),
-// el puntaje acumulado de cada jugador hasta ese punto.
 function getEvolucion() {
   var jugados = PARTIDOS.filter(function(p) { return parseRes(resultados[p.cod]); });
-  var acumulado = {};
-  JUGADORES.forEach(function(j){ acumulado[j] = 0; });
-  var labels = [];
-  var series = {};
-  JUGADORES.forEach(function(j){ series[j] = []; });
-
+  var acumulado = {}, labels = [], series = {};
+  JUGADORES.forEach(function(j){ acumulado[j]=0; series[j]=[]; });
   jugados.forEach(function(p) {
     var r = parseRes(resultados[p.cod]);
     labels.push(p.cod);
     JUGADORES.forEach(function(j) {
-      var pron;
-      if (p.prons) {
-        pron = p.prons[JUGADORES.indexOf(j)];
-      } else {
-        pron = getPronElim(p.cod, j);
-      }
+      var pron = p.prons ? p.prons[JUGADORES.indexOf(j)] : getPronElim(p.cod, j);
       var pu = pron ? (calcPts(r.signo, pron) || 0) : 0;
       acumulado[j] += pu;
       series[j].push(acumulado[j]);
     });
   });
-
   return { labels: labels, series: series };
 }
 
-var COLORES = [
-  "#e6194b","#3cb44b","#4363d8","#f58231","#911eb4","#46f0f0","#f032e6","#bcf60c",
-  "#fabebe","#008080","#e6beff","#9a6324","#800000","#aaffc3","#808000","#000075"
-];
+var COLORES = ["#e6194b","#3cb44b","#4363d8","#f58231","#911eb4","#46f0f0","#f032e6","#bcf60c",
+               "#fabebe","#008080","#e6beff","#9a6324","#800000","#aaffc3","#808000","#000075"];
 
 var chartInstance = null;
 function renderChart() {
-  if (typeof Chart === "undefined") {
-    // Chart.js todavia no cargo, reintentar en 300ms
-    setTimeout(renderChart, 300);
-    return;
-  }
-  var ev = getEvolucion();
+  if (typeof Chart === "undefined") { setTimeout(renderChart, 300); return; }
+  var ev  = getEvolucion();
   var ctx = document.getElementById("chart-evolucion");
   if (!ctx) return;
-
   if (!ev.labels.length) {
     if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
     var c2d = ctx.getContext("2d");
     c2d.clearRect(0,0,ctx.width,ctx.height);
-    c2d.font = "13px Arial";
-    c2d.fillStyle = "#999";
+    c2d.font = "13px Arial"; c2d.fillStyle = "#999";
     c2d.fillText("Todavia no hay partidos con resultado cargado.", 10, 30);
     return;
   }
-
   var datasets = JUGADORES.map(function(j, i) {
-    return {
-      label: j,
-      data: ev.series[j],
-      borderColor: COLORES[i % COLORES.length],
-      backgroundColor: COLORES[i % COLORES.length],
-      borderWidth: 2,
-      pointRadius: 2,
-      tension: 0.15,
-      fill: false
-    };
+    return { label:j, data:ev.series[j], borderColor:COLORES[i%COLORES.length],
+             backgroundColor:COLORES[i%COLORES.length], borderWidth:2, pointRadius:2, tension:0.15, fill:false };
   });
-
   if (chartInstance) chartInstance.destroy();
   chartInstance = new Chart(ctx, {
     type: "line",
     data: { labels: ev.labels, datasets: datasets },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       interaction: { mode: "nearest", intersect: false },
       plugins: {
         legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 10 } } },
@@ -348,51 +309,48 @@ function thJug() {
 
 function selPronHtml(cod, jugador) {
   var actual = getPronElim(cod, jugador);
-  var opts = ["", "L", "E", "V"].map(function(v) {
-    var label = v === "" ? "-" : v;
-    var sel = v === actual ? " selected" : "";
-    return "<option value='"+v+"'"+sel+">"+label+"</option>";
+  var opts = ["","L","E","V"].map(function(v) {
+    return "<option value='"+v+"'"+(v===actual?" selected":"")+">"+(v||"-")+"</option>";
   }).join("");
-  var cls = "pron-select" + (actual === "L" ? " psL" : actual === "E" ? " psE" : actual === "V" ? " psV" : "");
+  var cls = "pron-select"+(actual==="L"?" psL":actual==="E"?" psE":actual==="V"?" psV":"");
   return "<select class='"+cls+"' data-cod='"+cod+"' data-jugador='"+jugador+"' data-elimpron='1'>"+opts+"</select>";
 }
 
-function renderFila(p, conProns) {
+function renderFila(p) {
   var r      = parseRes(resultados[p.cod]);
   var resVal = resultados[p.cod] || "";
   var esElim = !!p.fase;
-  var inpCls = "res-input" + (r ? " ok" : "");
-  var localN = getLocalNom(p);
-  var visN   = getVisNom(p);
+  var inpCls = "res-input"+(r?" ok":"");
+  var localN = getLocalNom(p), visN = getVisNom(p);
 
-  var lcell = "<td class='td-equipo'>"+localN+"</td>";
-  var vcell = "<td class='td-equipo'>"+visN+"</td>";
-
-  var rcell = "<td style='text-align:center'>"
-    + "<input class='"+inpCls+"' data-cod='"+p.cod+"' type='text' value='"+resVal+"' placeholder='0-0'/>"
-    + (esElim ? "<div class='nota-elim'>90+supl sin penales</div>" : "")
-    + "</td>";
-
-  var h = "<tr><td class='td-fecha'>"+p.fecha+"</td><td class='td-sede'>"+p.sede+"</td><td class='cod'>"+p.cod+"</td>";
-  h += lcell + rcell + vcell;
+  var h = "<tr>"
+    +"<td class='td-fecha'>"+p.fecha+"</td>"
+    +"<td class='td-sede'>"+p.sede+"</td>"
+    +"<td class='cod'>"+p.cod+"</td>"
+    +"<td class='td-equipo'>"+localN+"</td>"
+    +"<td style='text-align:center'>"
+    +"<input class='"+inpCls+"' data-cod='"+p.cod+"' type='text' value='"+resVal+"' placeholder='0-0'/>"
+    +(esElim?"<div class='nota-elim'>90+supl sin penales</div>":"")
+    +"</td>"
+    +"<td class='td-equipo'>"+visN+"</td>";
 
   if (p.prons) {
     JUGADORES.forEach(function(j, ji) {
-      var pron   = p.prons[ji];
-      var pts    = r ? calcPts(r.signo, pron) : null;
-      var pcls   = pts===1 ? " pt1" : pts===0 ? " pt0" : " pt-vacio";
-      var ptxt   = pts!==null ? " <b>("+pts+")</b>" : "";
+      var pron = p.prons[ji];
+      var pts  = r ? calcPts(r.signo, pron) : null;
+      var pcls = pts===1?" pt1":pts===0?" pt0":" pt-vacio";
+      var ptxt = pts!==null?" <b>("+pts+")</b>":"";
       h += "<td class='"+pron+pcls+"'>"+pron+ptxt+"</td>";
     });
   } else if (esElim) {
     JUGADORES.forEach(function(j) {
       var pron = getPronElim(p.cod, j);
       var pts  = r ? calcPts(r.signo, pron) : null;
-      var ptxt = pts!==null ? "<span class='pts-mini'>("+pts+"pt)</span>" : "";
+      var ptxt = pts!==null?"<span class='pts-mini'>("+pts+"pt)</span>":"";
       h += "<td style='text-align:center'>"+selPronHtml(p.cod, j)+ptxt+"</td>";
     });
   }
-  return h + "</tr>";
+  return h+"</tr>";
 }
 
 function renderFixture() {
@@ -409,22 +367,19 @@ function renderFixture() {
 
   grupos.forEach(function(g) {
     var ps = PARTIDOS.filter(function(p){ return p.grupo===g; });
-    html += "<h2>GRUPO "+g+"</h2><table><thead><tr>";
-    html += "<th>Fecha</th><th>Sede</th><th>Cod</th><th>Local</th><th>Result.</th><th>Visitante</th>"+thJug();
-    html += "</tr></thead><tbody>";
-    ps.forEach(function(p){ html += renderFila(p, true); });
+    html += "<h2>GRUPO "+g+"</h2><table><thead><tr>"
+      +"<th>Fecha</th><th>Sede</th><th>Cod</th><th>Local</th><th>Result.</th><th>Visitante</th>"+thJug()
+      +"</tr></thead><tbody>";
+    ps.forEach(function(p){ html += renderFila(p); });
     html += "</tbody></table>";
   });
 
   fases.forEach(function(f) {
     var ps = PARTIDOS.filter(function(p){ return p.fase===f.key; });
     if (!ps.length) return;
-    var tieneProns = ps.some(function(p){ return p.prons; });
-    html += "<h2>"+f.label+" - resultado 90+supl sin penales (empate valido)</h2>";
-    html += "<table><thead><tr><th>Fecha</th><th>Sede</th><th>Cod</th><th>Local</th><th>Result.</th><th>Visitante</th>";
-    html += tieneProns ? thJug() : thJug();
-    html += "</tr></thead><tbody>";
-    ps.forEach(function(p){ html += renderFila(p, false); });
+    html += "<h2>"+f.label+" - resultado 90+supl sin penales (empate valido)</h2>"
+      +"<table><thead><tr><th>Fecha</th><th>Sede</th><th>Cod</th><th>Local</th><th>Result.</th><th>Visitante</th>"+thJug()+"</tr></thead><tbody>";
+    ps.forEach(function(p){ html += renderFila(p); });
     html += "</tbody></table>";
   });
 
@@ -435,46 +390,19 @@ function renderFixture() {
 function bindEvents() {
   document.querySelectorAll("input.res-input").forEach(function(inp) {
     inp.onchange = function() {
-      var cod = this.getAttribute("data-cod");
-      var val = this.value.trim();
-      var r   = parseRes(val);
-      if (val === "") {
-        delete resultados[cod];
-        this.className = "res-input";
-      } else if (r) {
-        resultados[cod] = val;
-        this.className = "res-input ok";
-      } else {
-        this.className = "res-input err";
-        return;
-      }
-      guardar();
-      renderFixture();
-      renderTabla();
-      renderChart();
+      var cod = this.getAttribute("data-cod"), val = this.value.trim(), r = parseRes(val);
+      if (val==="") { delete resultados[cod]; this.className="res-input"; }
+      else if (r)   { resultados[cod]=val;    this.className="res-input ok"; }
+      else          { this.className="res-input err"; return; }
+      guardar(); renderFixture(); renderTabla(); renderChart();
     };
   });
-
-  document.querySelectorAll("input.eq-input").forEach(function(inp) {
-    inp.onchange = function() {
-      var cod = this.getAttribute("data-cod");
-      var eq  = this.getAttribute("data-eq");
-      if (!equiposElim[cod]) equiposElim[cod] = {};
-      equiposElim[cod][eq] = this.value;
-      guardar();
-    };
-  });
-
   document.querySelectorAll("select[data-elimpron]").forEach(function(sel) {
     sel.onchange = function() {
-      var cod = this.getAttribute("data-cod");
-      var jug = this.getAttribute("data-jugador");
+      var cod = this.getAttribute("data-cod"), jug = this.getAttribute("data-jugador");
       if (!pronsElim[cod]) pronsElim[cod] = {};
       pronsElim[cod][jug] = this.value;
-      guardar();
-      renderFixture();
-      renderTabla();
-      renderChart();
+      guardar(); renderFixture(); renderTabla(); renderChart();
     };
   });
 }
@@ -483,20 +411,19 @@ function renderTabla() {
   var tabla = getTabla();
   var html  = "<table><thead><tr><th>#</th><th>Jugador</th><th>Partidos</th><th>Puntos</th></tr></thead><tbody>";
   tabla.forEach(function(row, i) {
-    var cls = i===0?"pos-1": i===1?"pos-2": i===2?"pos-3":"";
-    var med = i===0?"1":i===1?"2":i===2?"3":(i+1);
-    html += "<tr class='"+cls+"'>";
-    html += "<td style='text-align:center;font-weight:bold'>"+med+"</td>";
-    html += "<td><b>"+row.jugador+"</b> <span class='club-tag'>("+(CLUBES[row.jugador] || "-")+")</span></td>";
-    html += "<td style='text-align:center;color:#555'>"+row.jugados+"</td>";
-    html += "<td style='text-align:center'><span class='pts-badge'>"+row.pts+"</span></td>";
-    html += "</tr>";
+    var cls = i===0?"pos-1":i===1?"pos-2":i===2?"pos-3":"";
+    var med = i<3 ? (i+1) : (i+1);
+    html += "<tr class='"+cls+"'>"
+      +"<td style='text-align:center;font-weight:bold'>"+med+"</td>"
+      +"<td><b>"+row.jugador+"</b> <span class='club-tag'>("+(CLUBES[row.jugador]||"-")+")</span></td>"
+      +"<td style='text-align:center;color:#555'>"+row.jugados+"</td>"
+      +"<td style='text-align:center'><span class='pts-badge'>"+row.pts+"</span></td>"
+      +"</tr>";
   });
   html += "</tbody></table><p style='color:#888;font-size:11px;margin-top:8px'>Puntaje calculado sobre partidos con resultado cargado (grupos + eliminatorias).</p>";
   document.getElementById("tabla-pos").innerHTML = html;
 }
 
-// INIT
 window.onload = function() {
   try {
     firebase.initializeApp({
@@ -514,16 +441,11 @@ window.onload = function() {
         if (data.equipos)    equiposElim = data.equipos;
         if (data.pronsElim)  pronsElim   = data.pronsElim;
       }
-      renderFixture();
-      renderTabla();
-      renderChart();
-      updInd();
+      renderFixture(); renderTabla(); renderChart(); updInd();
     });
   } catch(e) {
     console.error("Firebase error:", e);
-    renderFixture();
-    renderTabla();
-    renderChart();
+    renderFixture(); renderTabla(); renderChart();
   }
 };
 </script>
