@@ -60,7 +60,9 @@ td { border: 1px solid #ccc; padding: 3px 6px; white-space: nowrap; }
 <div class="container">
 <div class="info">
   Resultados fase de grupos: escribi el marcador en formato 2-1 y presiona Enter o clic en otro lado. La tabla se actualiza sola.<br>
-  Eliminatorias: el resultado es el de 90 minutos + suplementario sin penales (puede quedar empate). Cada jugador carga su pronostico L/E/V en su propia columna.
+  Eliminatorias: el resultado es el de 90 minutos + suplementario sin penales (puede quedar empate). Cada jugador carga su pronostico L/E/V en su propia columna.<br>
+  <b style="color:#dc3545">⚠️ Si hay resultados incorrectos cargados, hacé clic acá: </b>
+  <button onclick="limpiarResultadosIncorrectos()" style="background:#dc3545;color:#fff;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;">Borrar resultados incorrectos</button>
 </div>
 <div id="fixture-container">Cargando datos...</div>
 <h2>TABLA DE POSICIONES</h2>
@@ -200,9 +202,9 @@ var PARTIDOS = [
   {cod:"P102", fase:"semis",   fecha:"mie 15/07 16:00", sede:"Atlanta",      local:"Gan. P99 Inglaterra",    vis:"Gan. P100 Argentina",    prons:["V","V","V","V","V","V","E","V","V","E","V","V","V","V","V","L"]},
   // ── 3ER PUESTO Y FINAL ──────────────────────────────────────────────────────
   {cod:"P103", fase:"3er",     fecha:"sab 18/07 18:00", sede:"Miami",        local:"Perd. P101 Francia",  vis:"Perd. P102 Inglaterra",           prons:["L","L","L","-","V","-","L","-","-","L","L","L","L","L","V","-"]},
-  {cod:"P104", fase:"final",   fecha:"dom 19/07 16:00", sede:"NY New Jersey",local:"Gan. P101 España",   vis:"Gan. P102 Argentina"}
+  {cod:"P104", fase:"final",   fecha:"dom 19/07 16:00", sede:"NY New Jersey",local:"Gan. P101 España",   vis:"Gan. P102 Argentina",           prons:["V","V","E","-","V","-","V","-","-","E","V","V","V","V","V","-"]}
 ];
-
+  
 var resultados  = {};
 var equiposElim = {};
 var pronsElim   = {};
@@ -278,9 +280,17 @@ function getEvolucion() {
   return { labels: labels, series: series };
 }
 
+function limpiarResultadosIncorrectos() {
+  if (!confirm("¿Borrar TODOS los resultados cargados automáticamente y empezar de cero?")) return;
+  resultados = {};
+  guardar();
+  renderFixture(); renderTabla(); renderChart();
+}
+
 // ── AUTO-RESULTADOS (football-data.org) ──────────────────────────────────────
 var FD_TOKEN = "57e69605ffbb4f3bbb785c96198f53ef";
-var FD_URL   = "https://corsproxy.io/?url=https://api.football-data.org/v4/competitions/WC/matches?status=FINISHED";
+var FD_BASE  = "https://corsproxy.io/?url=https://api.football-data.org/v4/competitions/WC2026/matches";
+var FD_URL   = FD_BASE + "?status=FINISHED";
 
 // Mapa de nombres API → nombres del PRODE
 var NOMBRE_MAP = {
@@ -331,12 +341,19 @@ function autoActualizarResultados() {
       var huboNuevos = false;
 
       data.matches.forEach(function(m) {
+        // Solo partidos realmente terminados con marcador válido
         if (m.status !== "FINISHED") return;
-        var home  = m.homeTeam && m.homeTeam.name ? m.homeTeam.name : "";
-        var away  = m.awayTeam && m.awayTeam.name ? m.awayTeam.name : "";
-        var gHome = m.score && m.score.fullTime ? m.score.fullTime.home : null;
-        var gAway = m.score && m.score.fullTime ? m.score.fullTime.away : null;
-        if (home === "" || away === "" || gHome === null || gAway === null) return;
+        if (!m.score || !m.score.fullTime) return;
+        var gHome = m.score.fullTime.home;
+        var gAway = m.score.fullTime.away;
+        if (gHome === null || gHome === undefined || gAway === null || gAway === undefined) return;
+        if (typeof gHome !== "number" || typeof gAway !== "number") return;
+        // Verificar que sea del Mundial 2026
+        if (!m.competition || (m.competition.code !== "WC" && m.competition.code !== "WC2026")) return;
+
+        var home = m.homeTeam && m.homeTeam.name ? m.homeTeam.name : "";
+        var away = m.awayTeam && m.awayTeam.name ? m.awayTeam.name : "";
+        if (!home || !away) return;
 
         var p = buscarPartido(home, away);
         if (!p) return;
